@@ -15,7 +15,8 @@ import {
   BASE_DEFAULT_EXPLORER_URL,
   ICON_NAMES,
   MEDIA_QUERY_MAX,
-  CHAIN_ICONS
+  CHAIN_ICONS,
+  DEMO_DEPOSITS
 } from "../../../../consts";
 import { ROUTES_TYPE } from "../../../../consts/routes-type";
 import { getCurrentPath } from "../../../../features/RebalancePerformance/utils";
@@ -63,10 +64,9 @@ export const AssetHeader: FC<{
   const chainIcon = useMemo(() => CHAIN_ICONS[getChainIdByChainName(activeChain)], [activeChain]);
   
   // Calculate total earnings for a year with compound interest
-  const calculateYearEarnings = (avgApr: number) => {
-    const SIMULATED_DEPOSIT = 1000000;
+  const calculateYearEarnings = (avgApr: number, deposit: number) => {
     const DAYS_IN_YEAR = 365;
-    let balance = SIMULATED_DEPOSIT;
+    let balance = deposit;
     
     // Compound daily for a year
     for (let i = 0; i < DAYS_IN_YEAR; i++) {
@@ -74,13 +74,14 @@ export const AssetHeader: FC<{
       balance += balance * dailyRate;
     }
     
-    return balance - SIMULATED_DEPOSIT; // Return only the earnings
+    return balance - deposit; // Return only the earnings
   };
   
-  // Add 1M demo deposit + year earnings to total supply in demo mode (only for DAI)
-  const yearEarnings = (isDemoMode && pool?.token === 'DAI') ? calculateYearEarnings(pool?.avgApr || 0) : 0;
-  const displayFunds = (isDemoMode && pool?.token === 'DAI')
-    ? (pool?.funds || 0) + 1000000 + yearEarnings 
+  // Add demo deposit + year earnings to total supply in demo mode
+  const demoAmount = DEMO_DEPOSITS[pool?.token] || 0;
+  const yearEarnings = (isDemoMode && demoAmount > 0) ? calculateYearEarnings(pool?.avgApr || 0, demoAmount) : 0;
+  const displayFunds = (isDemoMode && demoAmount > 0)
+    ? (pool?.funds || 0) + demoAmount + yearEarnings 
     : pool?.funds;
 
   const getTitle = () => {

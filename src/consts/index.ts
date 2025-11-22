@@ -216,3 +216,11 @@ export const LINK_TERMS_OF_SERVICE =
 
 export const LINK_PRIVACY_NOTICE =
   "https://docs.google.com/document/d/1PF4ik8sHbVqW8Lb8l6yo2H2vuQEZnr__-Ga2CMYW2yw";
+
+// Demo mode deposit amounts per token
+export const DEMO_DEPOSITS: Record<string, number> = {
+  'DAI': 1000000,      // $1,000,000
+  'USDC.e': 1600000,   // $1,600,000
+  'USDC': 1200000,     // $1,200,000
+  'USDT': 1200000      // $1,200,000
+};

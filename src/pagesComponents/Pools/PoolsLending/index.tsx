@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { CardPool } from "../../../components/card";
 import { Risk } from "../../../components/risk";
 import { Tooltip } from "../../../components/tooltip";
-import { ICON_NAMES, ROUTE_PATHS } from "../../../consts";
+import { ICON_NAMES, ROUTE_PATHS, DEMO_DEPOSITS } from "../../../consts";
 import { DepositLendingButton } from "../../../features/actions/deposit-or-withdraw-button/DepositLendingButton";
 import { WithdrawLendingButton } from "../../../features/actions/deposit-or-withdraw-button/WithdrawLendingButton";
 import { formatNumber, formatPercent, formatNeutralPercent } from "../../../utils/formatNumber";
@@ -82,10 +82,10 @@ export const PoolsLending = observer(
     
     // Calculate total demo funds with actual days earnings
     const calculateDemoFunds = (pool: IPoolData) => {
-      if (!isDemoMode) return pool.funds;
+      const demoAmount = DEMO_DEPOSITS[pool.token] || 0;
+      if (!isDemoMode || demoAmount === 0) return pool.funds;
       
-      const SIMULATED_DEPOSIT = 1000000;
-      let balance = SIMULATED_DEPOSIT;
+      let balance = demoAmount;
       
       // Compound daily for actual number of days
       for (let i = 0; i < actualDays; i++) {
@@ -93,8 +93,8 @@ export const PoolsLending = observer(
         balance += balance * dailyRate;
       }
       
-      const yearEarnings = balance - SIMULATED_DEPOSIT;
-      return pool.funds + SIMULATED_DEPOSIT + yearEarnings;
+      const yearEarnings = balance - demoAmount;
+      return pool.funds + demoAmount + yearEarnings;
     };
     const poolStore = useStore("poolStore");
     const { activeChain } = useStore("poolsStore");
@@ -269,7 +269,7 @@ export const PoolsLending = observer(
                         alignItems="center"
                       >
                         <Text color="white" borderBottom={"dashed 1px gray"}>
-                          APY
+                          Rebalance APY
                         </Text>
                         {getProtocolIcons(item.token)}
                         <Text textStyle="textMono16" ml={2}>
@@ -284,42 +284,42 @@ export const PoolsLending = observer(
                   </HStack>
 
                   <HStack justify="space-between">
-                    <Tooltip label="Rebalance APY advantage over the lending market highest APY in last 30 days">
+                    <Tooltip label="Average market APY in last 30 days">
                       <Text borderBottom={"dashed 1px gray"} color="white">
-                        {">"} market max.
+                        Market av. APY
                       </Text>
                     </Tooltip>
-                    <Text color={item.apr > 0 ? "green.100" : "white"} textStyle="textMono16">
+                    <Text color="white" textStyle="textMono16">
                       {loading || error ? (
                         <Skeleton height="20px" width="50px" />
                       ) : (
-                        formatPercent(item.apr)
+                        formatNeutralPercent(item.avgApr - item.apr)
                       )}
                     </Text>
                   </HStack>
                 </>
               );
             case RowCardProccessType.assets:
-              const isDemo = isDemoMode && !address && (item as IPoolData).token === 'DAI';
               const itemAsPool = item as IPoolData;
+              const demoAmountAssets = DEMO_DEPOSITS[itemAsPool.token] || 0;
+              const isDemo = isDemoMode && !address && demoAmountAssets > 0;
               
               // Calculate demo profit for actual number of days
               const calculateDemoProfit = () => {
-                const SIMULATED_DEPOSIT = 1000000;
-                let balance = SIMULATED_DEPOSIT;
+                let balance = demoAmountAssets;
                 
                 for (let i = 0; i < actualDays; i++) {
                   const dailyRate = itemAsPool.avgApr / 100 / 365;
                   balance += balance * dailyRate;
                 }
                 
-                const profit = balance - SIMULATED_DEPOSIT;
+                const profit = balance - demoAmountAssets;
                 return formatNumber(profit.toFixed(2));
               };
               
               return (
                 <>
-                  {(!!address || (isDemoMode && itemAsPool.token === 'DAI')) ? (
+                  {(!!address || (isDemoMode && demoAmountAssets > 0)) ? (
                     <>
                       <Divider borderColor="black.60" />
                       <HStack justify="space-between">
@@ -344,7 +344,7 @@ export const PoolsLending = observer(
                             My deposit
                           </Text>
                           <Text textStyle="textMono16" color="white">
-                            {formatNumber(1000000)} {itemAsPool.token}
+                            {formatNumber(demoAmountAssets)} {itemAsPool.token}
                           </Text>
                         </HStack>
                       ) : address ? (

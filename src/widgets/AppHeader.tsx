@@ -22,12 +22,14 @@ export const AppHeader = observer(() => {
   const [isDesktop] = useMediaQuery("(min-width: 1130px)");
   const { isDemoMode, toggleDemoMode, setDemoMode } = useStore("demoStore");
   
-  // Auto-disable demo mode when wallet connects
+  // Auto-manage demo mode: disable when wallet connects, enable when disconnects
   React.useEffect(() => {
-    if (address && isDemoMode) {
+    if (address) {
       setDemoMode(false);
+    } else {
+      setDemoMode(true);
     }
-  }, [address, isDemoMode, setDemoMode]);
+  }, [address, setDemoMode]);
 
   return (
     <Flex

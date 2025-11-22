@@ -14,6 +14,7 @@ import { DateSwitcher } from "@/components/data-switcher";
 import { useAccount } from "wagmi";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/hooks/useStoreContext";
+import { DEMO_DEPOSITS } from "@/consts";
 
 const data = [
   {
@@ -144,7 +145,7 @@ const generateSimulatedEarnings = async (
   activeChain: any
 ) => {
   try {
-    const SIMULATED_DEPOSIT = 1000000; // $1M
+    const SIMULATED_DEPOSIT = DEMO_DEPOSITS[token] || 1000000;
     
     // Fetch APR data to calculate simulated earnings
     const avgAPRTiksResponse = await fetch(
@@ -207,11 +208,12 @@ const EarningsChart = observer(
     const { isDemoMode } = useStore("demoStore");
 
     useEffect(() => {
-      if (address || (isDemoMode && token === 'DAI')) {
+      const demoAmount = DEMO_DEPOSITS[token] || 0;
+      if (address || (isDemoMode && demoAmount > 0)) {
         setError(false);
         
-        if (isDemoMode && token === 'DAI') {
-          // Generate simulated earnings for demo mode (only for DAI)
+        if (isDemoMode && demoAmount > 0) {
+          // Generate simulated earnings for demo mode
           generateSimulatedEarnings(
             selectedDate.interval,
             selectedDate.intervals,
@@ -246,7 +248,8 @@ const EarningsChart = observer(
     }, [address, isDemoMode, token, activeChain, selectedDate]);
 
     const userTotalEarning = userEarningsData?.reduce((acc, el) => acc + el.uv, 0) || 0;
-    const isDemo = isDemoMode && !address && token === 'DAI';
+    const demoAmountChart = DEMO_DEPOSITS[token] || 0;
+    const isDemo = isDemoMode && !address && demoAmountChart > 0;
 
     return (
       <>
@@ -276,7 +279,7 @@ const EarningsChart = observer(
               </Flex>
               <Flex position={"relative"} w={"100%"}>
                 <ResponsiveContainer width="100%" height="100%">
-                  {(address || (isDemoMode && token === 'DAI')) && userEarningsData ? (
+                  {(address || (isDemoMode && demoAmountChart > 0)) && userEarningsData ? (
                     <BarChart width={150} height={10} data={userEarningsData}>
                       <Bar barSize={6} dataKey="uv" fill="#4CFF94" minPointSize={5}>
                         {userEarningsData?.map((entry, index) => {
@@ -305,7 +308,7 @@ const EarningsChart = observer(
                     </BarChart>
                   )}
                 </ResponsiveContainer>
-                {!address && !(isDemoMode && token === 'DAI') ? (
+                {!address && !(isDemoMode && demoAmountChart > 0) ? (
                   <Flex
                     position="absolute"
                     inset="0"

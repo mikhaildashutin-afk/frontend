@@ -70,12 +70,12 @@ const PoolsLendingTable = observer(({ pools, isLoading, error, chartData }: Pool
   
   const actualDays = calculateActualDays();
   
-  // Calculate total demo funds with actual days earnings (only for DAI)
+  // Calculate total demo funds with actual days earnings
   const calculateDemoFunds = (pool: IPoolData) => {
-    if (!isDemoMode || pool.token !== 'DAI') return pool.funds;
+    const demoAmount = DEMO_DEPOSITS[pool.token] || 0;
+    if (!isDemoMode || demoAmount === 0) return pool.funds;
     
-    const SIMULATED_DEPOSIT = 1000000;
-    let balance = SIMULATED_DEPOSIT;
+    let balance = demoAmount;
     
     // Compound daily for actual number of days
     for (let i = 0; i < actualDays; i++) {
@@ -83,8 +83,8 @@ const PoolsLendingTable = observer(({ pools, isLoading, error, chartData }: Pool
       balance += balance * dailyRate;
     }
     
-    const yearEarnings = balance - SIMULATED_DEPOSIT;
-    return pool.funds + SIMULATED_DEPOSIT + yearEarnings;
+    const yearEarnings = balance - demoAmount;
+    return pool.funds + demoAmount + yearEarnings;
   };
 
   const getChainRouteName = () => {
@@ -143,7 +143,7 @@ const PoolsLendingTable = observer(({ pools, isLoading, error, chartData }: Pool
               </Text>
             </Th>
             <Th maxW="118px" p="16px 12px" textTransform="unset">
-              <Text textStyle="text14">30D avg. APY</Text>
+              <Text textStyle="text14">Rebalance APY</Text>
             </Th>
             <Th maxW="118px" p="16px 12px" textTransform="unset">
               <Text
@@ -152,7 +152,7 @@ const PoolsLendingTable = observer(({ pools, isLoading, error, chartData }: Pool
                   textWrap: "balance"
                 }}
               >
-                % APY {">"} market avg.
+                Market av. APY
               </Text>
             </Th>
             <Th maxW="118px" p="16px 12px" textTransform="unset">
@@ -211,10 +211,9 @@ const PoolsLendingTable = observer(({ pools, isLoading, error, chartData }: Pool
               <Th p="24px 12px">
                 <Text
                   textStyle="textMono16"
-                  color={pool.avgApr > 0 ? "greenAlpha.100" : "redAlpha.100"}
+                  color="white"
                 >
-                  {pool.avgApr > 0 ? "+" : "-"}
-                  {formatNumber(pool.apr)}%
+                  {formatNumber(pool.avgApr - pool.apr)}%
                 </Text>
               </Th>
               <Th p="24px 12px">

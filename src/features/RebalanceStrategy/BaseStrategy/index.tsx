@@ -3,7 +3,7 @@ import React from "react";
 import { useAccount } from "wagmi";
 import { observer } from "mobx-react-lite";
 
-import { MEDIA_QUERY_MAX } from "../../../consts";
+import { MEDIA_QUERY_MAX, DEMO_DEPOSITS } from "../../../consts";
 import { useBalanceOfAsset } from "../../../hooks/useBalanceOfAsset";
 import { DepositLendingButton } from "../../actions/deposit-or-withdraw-button/DepositLendingButton";
 import { WithdrawLendingButton } from "../../actions/deposit-or-withdraw-button/WithdrawLendingButton";
@@ -18,9 +18,10 @@ const BaseStrategy: React.FC<any> = observer(({ pool, chartData }) => {
   const [media] = useMediaQuery(MEDIA_QUERY_MAX);
   const { isDemoMode } = useStore("demoStore");
   
-  // Show $1M simulated deposit when demo mode is enabled (only for DAI)
-  const displayBalance = (isDemoMode && pool.token === 'DAI') ? 1000000 : balance;
-  const isDemo = isDemoMode && !address && pool.token === 'DAI';
+  // Show simulated deposit when demo mode is enabled
+  const demoAmount = DEMO_DEPOSITS[pool.token] || 0;
+  const displayBalance = (isDemoMode && demoAmount > 0) ? demoAmount : balance;
+  const isDemo = isDemoMode && !address && demoAmount > 0;
   
   return (
     <SimpleGrid columns={media ? 1 : 2} gap="24px">

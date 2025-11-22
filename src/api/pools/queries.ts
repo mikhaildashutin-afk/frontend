@@ -242,9 +242,16 @@ const getChartDataAndEarnings = async (
 
 const simulateEarnings = (
   data: ILendChartData[],
+  token: string,
   interval: number = 1 // Number of days in the period (1 for daily, 7 for weekly)
 ): (ILendChartData & { userEarning: number })[] => {
-  const SIMULATED_DEPOSIT = 1000000; // $1,000,000
+  const DEMO_DEPOSITS: Record<string, number> = {
+    'DAI': 1000000,
+    'USDC.e': 1600000,
+    'USDC': 1200000,
+    'USDT': 1200000
+  };
+  const SIMULATED_DEPOSIT = DEMO_DEPOSITS[token] || 1000000;
   let cumulativeBalance = SIMULATED_DEPOSIT;
   
   return data.reverse().map((item, index) => {
@@ -265,13 +272,14 @@ const simulateEarnings = (
 
 const mapUserEarnings = (
   data: ILendChartData[],
+  token: string,
   earnings?: IIntervalResponse[],
   isDemoMode?: boolean,
   interval: number = 1
 ): (ILendChartData & { userEarning?: number | null })[] => {
   // Use simulated earnings only in demo mode
   if (isDemoMode) {
-    return simulateEarnings(data, interval);
+    return simulateEarnings(data, token, interval);
   }
   
   // Otherwise use real earnings data
@@ -290,6 +298,7 @@ const prepareChartData = (
   monthData: ChartData & { interval: number },
   halfYearData: ChartData & { interval: number },
   yearData: ChartData & { interval: number },
+  token: string,
   monthEarning?: IIntervalResponse[],
   halfYearEarning?: IIntervalResponse[],
   yearEarning?: IIntervalResponse[],
@@ -314,9 +323,9 @@ const prepareChartData = (
       }
     },
     chartData: {
-      "1m": mapUserEarnings(monthData.chartData, monthEarning, isDemoMode, monthData.interval),
-      "6m": mapUserEarnings(halfYearData.chartData, halfYearEarning, isDemoMode, halfYearData.interval),
-      "1y": mapUserEarnings(yearData.chartData, yearEarning, isDemoMode, yearData.interval)
+      "1m": mapUserEarnings(monthData.chartData, token, monthEarning, isDemoMode, monthData.interval),
+      "6m": mapUserEarnings(halfYearData.chartData, token, halfYearEarning, isDemoMode, halfYearData.interval),
+      "1y": mapUserEarnings(yearData.chartData, token, yearEarning, isDemoMode, yearData.interval)
     }
   };
 };
@@ -336,6 +345,7 @@ export const getAreaChartAllIntervalsWithoutToken = async (
       monthData,
       halfYearData,
       yearData,
+      highestAprTokenToday,
       monthEarning,
       halfYearEarning,
       yearEarning,
@@ -361,6 +371,7 @@ export const getAreaChartAllIntervals = async (
       monthData,
       halfYearData,
       yearData,
+      token,
       monthEarning,
       halfYearEarning,
       yearEarning,
