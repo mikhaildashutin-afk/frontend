@@ -123,6 +123,18 @@ const fillMissingHistoricalData = (
   const daysDifference = Math.floor((earliestDate.getTime() - targetStartDate.getTime()) / (1000 * 60 * 60 * 24));
   const periodsDifference = Math.floor(daysDifference / interval);
   
+  // Debug logging for year data
+  if (interval === 7 && requiredCount === 52) {
+    console.log('🔍 fillMissingHistoricalData:', {
+      dataLength: data.length,
+      earliestRealDate: earliestDate.toISOString().split('T')[0],
+      targetStartDate: targetStartDate.toISOString().split('T')[0],
+      daysDifference,
+      periodsDifference,
+      willFill: periodsDifference > 0
+    });
+  }
+  
   // If earliest date is already before or at target, no need to fill
   if (periodsDifference <= 0) {
     return data;
@@ -144,7 +156,15 @@ const fillMissingHistoricalData = (
     });
   }
   
-  return [...simulatedData, ...data];
+  if (interval === 7 && requiredCount === 52) {
+    console.log('✅ Added simulated data points:', simulatedData.length);
+  }
+  
+  // Combine and sort by date (oldest first)
+  const combined = [...simulatedData, ...data];
+  combined.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
+  
+  return combined;
 };
 
 export const getChartData = async (
@@ -190,6 +210,17 @@ export const getChartData = async (
       5,  // min APR for Market: 5%
       8   // max APR for Market: 8%
     );
+    
+    // Debug logging
+    if (interval === 7 && intervalsCount === 52) {
+      console.log('📊 Year chart data (1y):', {
+        originalCount: rebalanceAprData.length,
+        filledCount: filledRebalanceData.length,
+        firstDate: filledRebalanceData[0]?.from,
+        lastDate: filledRebalanceData[filledRebalanceData.length - 1]?.from,
+        requiredCount: intervalsCount
+      });
+    }
 
     const marketAprChart = filledMarketData.map((el: any) => ({
       lending: el.value || 0,
