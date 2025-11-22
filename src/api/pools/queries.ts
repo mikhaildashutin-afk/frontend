@@ -108,25 +108,30 @@ const fillMissingHistoricalData = (
   minAPR: number,
   maxAPR: number
 ): any[] => {
-  const currentCount = data.length;
-  
-  if (currentCount >= requiredCount) {
-    return data; // Already have enough data
-  }
-  
-  const missingCount = requiredCount - currentCount;
-  const simulatedData = [];
+  if (data.length === 0) return data;
   
   // Find the earliest date from real data (data might be in any order)
-  let earliestDate = new Date();
-  if (data.length > 0) {
-    const dates = data.map(d => new Date(d.from).getTime());
-    const earliestTimestamp = Math.min(...dates);
-    earliestDate = new Date(earliestTimestamp);
+  const dates = data.map(d => new Date(d.from).getTime());
+  const earliestTimestamp = Math.min(...dates);
+  const earliestDate = new Date(earliestTimestamp);
+  
+  // Calculate the target start date (requiredCount * interval days/weeks ago)
+  const targetStartDate = new Date();
+  targetStartDate.setDate(targetStartDate.getDate() - (requiredCount * interval));
+  
+  // Calculate how many periods we need to fill
+  const daysDifference = Math.floor((earliestDate.getTime() - targetStartDate.getTime()) / (1000 * 60 * 60 * 24));
+  const periodsDifference = Math.floor(daysDifference / interval);
+  
+  // If earliest date is already before or at target, no need to fill
+  if (periodsDifference <= 0) {
+    return data;
   }
   
-  // Generate missing data points going backwards in time
-  for (let i = missingCount; i > 0; i--) {
+  const simulatedData = [];
+  
+  // Generate missing data points going backwards from earliest real data
+  for (let i = periodsDifference; i > 0; i--) {
     const fakeDate = new Date(earliestDate);
     fakeDate.setDate(fakeDate.getDate() - (i * interval));
     
