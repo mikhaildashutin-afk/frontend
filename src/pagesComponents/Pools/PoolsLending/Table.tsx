@@ -29,6 +29,7 @@ import ArbIncentive from "@/components/badge/ArbIncentive";
 import { getIdByToken } from "@/utils/analytics";
 import { observer } from "mobx-react-lite";
 import { useStore } from "@/hooks/useStoreContext";
+import { DEMO_DEPOSITS } from "@/consts";
 
 interface PoolsLendingTableProps {
   pools: IPoolData[];
@@ -209,18 +210,12 @@ const PoolsLendingTable = observer(({ pools, isLoading, error, chartData }: Pool
                 </Flex>
               </Th>
               <Th p="24px 12px">
-                <Tooltip label={(() => {
-                  const marketAPY = pool.avgApr - pool.apr;
-                  const advantage = marketAPY > 0 ? ((pool.apr / marketAPY) * 100).toFixed(0) : 0;
-                  return `Average market APY in last 30 days. Rebalance is ${advantage}% higher`;
-                })()}>
-                  <Text
-                    textStyle="textMono16"
-                    color="white"
-                  >
-                    {formatNumber(pool.avgApr - pool.apr)}%
-                  </Text>
-                </Tooltip>
+                <Text
+                  textStyle="textMono16"
+                  color="white"
+                >
+                  {formatNumber(pool.avgApr - pool.apr)}%
+                </Text>
               </Th>
               <Th p="24px 12px">
                 {address ? (
