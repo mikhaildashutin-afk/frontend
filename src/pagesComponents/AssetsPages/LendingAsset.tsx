@@ -88,40 +88,6 @@ export const LendingAsset = observer(
         )}
         <Flex direction="column">
           <Flex align="center" justify="space-between">
-            {!media && (
-              <Flex gap="8px" alignItems="center">
-                <Text fontWeight="500">
-                  {loading || error ? renderSkeleton("20px", "60px") : "Pool"}
-                </Text>
-                <Flex align="center" gap="5px">
-                  {loading || error ? (
-                    <>
-                      {renderSkeleton("18px", "18px")}
-                      {renderSkeleton("20px", "100px")}
-                    </>
-                  ) : (
-                    <>
-                      <Icon name={CHAIN_ICONS[poolChainId]} size="18px" />
-                      <Link
-                        href={getFinalExplorerUrl({
-                          url: getExplorerUrlByChain(chainName),
-                          address: pool?.rebalancerAddress,
-                          type: "address"
-                        })}
-                        display="flex"
-                        justifyContent={"space-between"}
-                        isExternal
-                      >
-                        <Text textStyle="text14" color="black.5" mr="6px">
-                          {pool?.rebalancerAddress}
-                        </Text>
-                        <Icon name={ICON_NAMES.link} size="sm" />
-                      </Link>
-                    </>
-                  )}
-                </Flex>
-              </Flex>
-            )}
 
             <HStack divider={<Divider orientation="vertical" />} h="100%" color="black.5">
               {loading || error ? (

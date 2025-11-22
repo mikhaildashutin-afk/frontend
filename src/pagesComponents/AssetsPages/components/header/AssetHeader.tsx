@@ -117,29 +117,6 @@ export const AssetHeader: FC<{
                   <Icon name={ICON_NAMES?.assetFunction} size="sm" />
                 </Link>
               </Flex>
-              <Text display="flex" flexDirection="row" mt="4px">
-                <Flex gap="8px" alignItems="center">
-                  <Text fontWeight="500">Pool</Text>
-                  <Flex gap="5px">
-                    <Icon name={chainIcon} size="18px" />
-                    <Text textStyle="text14" color="black.5">
-                      {pool.rebalancerAddress?.substring(0, 12) +
-                        "..." +
-                        pool.rebalancerAddress?.substring(pool.rebalancerAddress?.length - 5)}
-                    </Text>
-                    <Link
-                      href={getFinalExplorerUrl({
-                        url: getExplorerUrlByChain(chainName),
-                        address: pool.rebalancerAddress,
-                        type: "address"
-                      })}
-                      isExternal
-                    >
-                      <Icon name={ICON_NAMES.link} size="sm" />
-                    </Link>
-                  </Flex>
-                </Flex>
-              </Text>
             </Flex>
           </Flex>
 

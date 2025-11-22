@@ -57,19 +57,6 @@ export const AppHeader = observer(() => {
         {!media && <AppNav />}
 
         <Flex gap="12px" alignItems="center">
-          {!media && (
-            <Flex alignItems="center" gap="8px" mr="12px">
-              <Text fontSize="sm" color="whiteAlpha.70">
-                Demo
-              </Text>
-              <Switch
-                size="sm"
-                colorScheme="green"
-                isChecked={isDemoMode}
-                onChange={toggleDemoMode}
-              />
-            </Flex>
-          )}
           {!!address && isDesktop && isLoading && <Skeleton height="24px" width="60px" />}
           {/* {isConnected && <AppNotification />} */}
           {!!address ? <WalletProfile className="step-1" /> : <ConnectWallet className="step-1" />}

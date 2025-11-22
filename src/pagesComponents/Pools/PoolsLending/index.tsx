@@ -245,13 +245,12 @@ export const PoolsLending = observer(
           switch (type) {
             case RowCardProccessType.metrics:
               const itemAsPoolMetrics = item as IPoolData;
-              const isDemoMetrics = isDemoMode && !address && itemAsPoolMetrics.token === 'DAI';
               return (
                 <>
                   <HStack justify="space-between">
-                    <Text color={isDemoMetrics ? "#8884d8" : "white"}>Funds in pool</Text>
+                    <Text color="white">Funds in pool</Text>
                     <Tooltip label="Funds in pool" color="white">
-                      <Text textStyle="textMono16" color={isDemoMetrics ? "#8884d8" : "white"}>
+                      <Text textStyle="textMono16" color="white">
                         {loading || error ? (
                           <Skeleton height="20px" width="50px" />
                         ) : (
@@ -324,10 +323,10 @@ export const PoolsLending = observer(
                     <>
                       <Divider borderColor="black.60" />
                       <HStack justify="space-between">
-                        <Text color={isDemo ? "#8884d8" : "white"}>
-                          {isDemo ? `Demo profit (${actualDays}d)` : "My Profit"}
+                        <Text color="white">
+                          My Profit
                         </Text>
-                        <Text textStyle="textMono16" color={isDemo ? "#8884d8" : "white"}>
+                        <Text textStyle="textMono16" color="white">
                           {loading || error ? (
                             <Skeleton height="20px" width="50px" />
                           ) : isDemo ? (
@@ -341,10 +340,10 @@ export const PoolsLending = observer(
                       </HStack>
                       {isDemo ? (
                         <HStack justify="space-between">
-                          <Text fontSize="md" fontWeight="500" color="#8884d8">
-                            Demo deposit
+                          <Text fontSize="md" fontWeight="500" color="white">
+                            My deposit
                           </Text>
-                          <Text textStyle="textMono16" color="#8884d8">
+                          <Text textStyle="textMono16" color="white">
                             {formatNumber(1000000)} {itemAsPool.token}
                           </Text>
                         </HStack>

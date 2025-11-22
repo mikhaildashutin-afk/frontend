@@ -189,8 +189,8 @@ const PoolsLendingTable = observer(({ pools, isLoading, error, chartData }: Pool
               <Th p="24px 12px">
                 <Text
                   textStyle="textMono16"
-                  color={isDemoMode && !address && pool.token === 'DAI' ? "#8884d8" : "white"}
-                  borderBottom={isDemoMode && !address && pool.token === 'DAI' ? "1px dashed #8884d8" : "1px dashed white"}
+                  color="white"
+                  borderBottom="1px dashed white"
                   w="max-content"
                 >
                   {formatNumber(calculateDemoFunds(pool))}
