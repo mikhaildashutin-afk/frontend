@@ -209,12 +209,18 @@ const PoolsLendingTable = observer(({ pools, isLoading, error, chartData }: Pool
                 </Flex>
               </Th>
               <Th p="24px 12px">
-                <Text
-                  textStyle="textMono16"
-                  color="white"
-                >
-                  {formatNumber(pool.avgApr - pool.apr)}%
-                </Text>
+                <Tooltip label={(() => {
+                  const marketAPY = pool.avgApr - pool.apr;
+                  const advantage = marketAPY > 0 ? ((pool.apr / marketAPY) * 100).toFixed(0) : 0;
+                  return `Average market APY in last 30 days. Rebalance is ${advantage}% higher`;
+                })()}>
+                  <Text
+                    textStyle="textMono16"
+                    color="white"
+                  >
+                    {formatNumber(pool.avgApr - pool.apr)}%
+                  </Text>
+                </Tooltip>
               </Th>
               <Th p="24px 12px">
                 {address ? (

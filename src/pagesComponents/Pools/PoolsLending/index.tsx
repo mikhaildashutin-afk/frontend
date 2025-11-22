@@ -284,7 +284,11 @@ export const PoolsLending = observer(
                   </HStack>
 
                   <HStack justify="space-between">
-                    <Tooltip label="Average market APY in last 30 days">
+                    <Tooltip label={(() => {
+                      const marketAPY = item.avgApr - item.apr;
+                      const advantage = marketAPY > 0 ? ((item.apr / marketAPY) * 100).toFixed(0) : 0;
+                      return `Average market APY in last 30 days. Rebalance is ${advantage}% higher`;
+                    })()}>
                       <Text borderBottom={"dashed 1px gray"} color="white">
                         Market av. APY
                       </Text>
