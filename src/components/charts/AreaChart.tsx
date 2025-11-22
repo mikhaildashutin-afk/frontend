@@ -54,7 +54,7 @@ export const AreaChart: FC<IAreaChartProps> = ({
         data={filteredData}
         margin={{
           top: 0,
-          right: showRightAxis ? -32 : 10,
+          right: showRightAxis ? 10 : 10,
           left: -25,
           bottom: 0
         }}

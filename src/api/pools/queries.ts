@@ -117,8 +117,13 @@ const fillMissingHistoricalData = (
   const missingCount = requiredCount - currentCount;
   const simulatedData = [];
   
-  // Get the earliest date from real data
-  const earliestDate = data.length > 0 ? new Date(data[0].from) : new Date();
+  // Find the earliest date from real data (data might be in any order)
+  let earliestDate = new Date();
+  if (data.length > 0) {
+    const dates = data.map(d => new Date(d.from).getTime());
+    const earliestTimestamp = Math.min(...dates);
+    earliestDate = new Date(earliestTimestamp);
+  }
   
   // Generate missing data points going backwards in time
   for (let i = missingCount; i > 0; i--) {
