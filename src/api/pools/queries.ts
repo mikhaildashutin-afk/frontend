@@ -224,12 +224,23 @@ export const getChartData = async (
     // Debug: log what backend returns
     if (interval === 7 && intervalsCount === 52) {
       const sortedRebalance = [...rebalanceAprData].sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
+      
+      // Find where real data (non-zero) starts
+      const firstNonZero = sortedRebalance.find(d => d.value && d.value > 0);
+      const lastNonZero = [...sortedRebalance].reverse().find(d => d.value && d.value > 0);
+      const nonZeroCount = sortedRebalance.filter(d => d.value && d.value > 0).length;
+      
       console.log('📥 Backend data BEFORE filling:', {
-        rebalanceCount: rebalanceAprData.length,
-        marketCount: highestMarketData.length,
-        rebalanceFirst: sortedRebalance[0]?.from,
-        rebalanceLast: sortedRebalance[sortedRebalance.length - 1]?.from,
-        rebalanceSample: sortedRebalance.slice(0, 3).concat(sortedRebalance.slice(-3))
+        totalCount: rebalanceAprData.length,
+        nonZeroCount: nonZeroCount,
+        zeroCount: rebalanceAprData.length - nonZeroCount,
+        firstDate: sortedRebalance[0]?.from,
+        lastDate: sortedRebalance[sortedRebalance.length - 1]?.from,
+        firstNonZeroDate: firstNonZero?.from,
+        firstNonZeroValue: firstNonZero?.value,
+        lastNonZeroDate: lastNonZero?.from,
+        lastNonZeroValue: lastNonZero?.value,
+        allDatesWithValues: sortedRebalance.map(d => ({ date: d.from, value: d.value }))
       });
     }
     
