@@ -110,17 +110,24 @@ const fillMissingHistoricalData = (
 ): any[] => {
   if (data.length === 0) return data;
   
-  // Sort real data by date (oldest first)
-  const sortedData = [...data].sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
-  
-  // Find earliest date in real data
-  const earliestRealDate = new Date(sortedData[0].from);
-  
   // Calculate target start date (requiredCount * interval days ago from today)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const targetStartDate = new Date(today);
   targetStartDate.setDate(targetStartDate.getDate() - (requiredCount * interval));
+  
+  // Sort and filter real data: keep only data >= targetStartDate
+  const filteredData = data
+    .filter(item => new Date(item.from) >= targetStartDate)
+    .sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
+  
+  if (filteredData.length === 0) {
+    console.log('⚠️ No real data in target period');
+    return data;
+  }
+  
+  // Find earliest date in filtered real data
+  const earliestRealDate = new Date(filteredData[0].from);
   
   // Calculate how many periods we need to fill BEFORE the earliest real data
   const daysDifference = Math.floor((earliestRealDate.getTime() - targetStartDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -130,8 +137,9 @@ const fillMissingHistoricalData = (
   if (interval === 7 && requiredCount === 52) {
     console.log('🔍 fillMissingHistoricalData (1y):', {
       originalDataLength: data.length,
-      earliestRealDate: sortedData[0]?.from,
-      latestRealDate: sortedData[sortedData.length - 1]?.from,
+      filteredDataLength: filteredData.length,
+      earliestRealDate: filteredData[0]?.from,
+      latestRealDate: filteredData[filteredData.length - 1]?.from,
       today: today.toISOString().split('T')[0],
       targetStartDate: targetStartDate.toISOString().split('T')[0],
       periodsDifference,
@@ -139,43 +147,51 @@ const fillMissingHistoricalData = (
     });
   }
   
-  // If we don't need to fill anything, just return sorted real data
-  if (periodsDifference <= 0) {
-    console.log('✅ No need to fill - real data covers the period');
-    return sortedData;
-  }
-  
-  // Generate simulated data ONLY for the missing period at the beginning
   const simulatedData: Array<{ value: number; from: string }> = [];
   
-  // Use average of first few real data points as base APR
-  const firstRealValues = sortedData.slice(0, 5).filter(d => d.value && d.value > 0);
-  let baseAPR = firstRealValues.length > 0 
-    ? firstRealValues.reduce((sum, d) => sum + d.value, 0) / firstRealValues.length
-    : (minAPR + maxAPR) / 2;
-  
-  let currentDate = new Date(targetStartDate);
-  
-  for (let i = 0; i < periodsDifference; i++) {
-    const dateKey = currentDate.toISOString().split('T')[0];
+  // Generate simulated data for the missing period at the beginning if needed
+  if (periodsDifference > 0) {
+    // Use average of first few real data points as base APR
+    const firstRealValues = filteredData.slice(0, 5).filter(d => d.value && d.value > 0);
+    let baseAPR = firstRealValues.length > 0 
+      ? firstRealValues.reduce((sum, d) => sum + d.value, 0) / firstRealValues.length
+      : (minAPR + maxAPR) / 2;
     
-    // Generate simulated APR with variation
-    const randomVariation = (Math.random() - 0.5) * 2; // ±1%
-    const simulatedAPR = Math.max(minAPR, Math.min(maxAPR, baseAPR + randomVariation));
+    let currentDate = new Date(targetStartDate);
     
-    simulatedData.push({
-      value: parseFloat(simulatedAPR.toFixed(2)),
-      from: dateKey
-    });
+    for (let i = 0; i < periodsDifference; i++) {
+      const dateKey = currentDate.toISOString().split('T')[0];
+      
+      // Generate simulated APR with variation
+      const randomVariation = (Math.random() - 0.5) * 2; // ±1%
+      const simulatedAPR = Math.max(minAPR, Math.min(maxAPR, baseAPR + randomVariation));
+      
+      simulatedData.push({
+        value: parseFloat(simulatedAPR.toFixed(2)),
+        from: dateKey
+      });
+      
+      baseAPR = simulatedAPR; // Update for next iteration
+      currentDate.setDate(currentDate.getDate() + interval);
+    }
     
-    baseAPR = simulatedAPR; // Update for next iteration
-    currentDate.setDate(currentDate.getDate() + interval);
+    console.log(`✅ Added ${simulatedData.length} simulated data points to fill the gap`);
   }
   
-  console.log(`✅ Added ${simulatedData.length} simulated data points at the beginning`);
+  // Combine simulated data with filtered real data
+  const result = [...simulatedData, ...filteredData];
   
-  // Combine simulated data with real data (already sorted)
-  return [...simulatedData, ...sortedData];
+  if (interval === 7 && requiredCount === 52) {
+    console.log('📊 Final result:', {
+      simulatedCount: simulatedData.length,
+      realDataCount: filteredData.length,
+      totalCount: result.length,
+      firstDate: result[0]?.from,
+      lastDate: result[result.length - 1]?.from
+    });
+  }
+  
+  return result;
 };
 
 export const getChartData = async (
