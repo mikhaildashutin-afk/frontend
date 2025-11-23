@@ -181,33 +181,37 @@ const fillMissingHistoricalData = (
   combined.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
   
   // Replace zero APR values with simulated values in the historical period
-  // (data before earliest non-zero APR should have simulated values)
-  let foundNonZero = false;
-  for (let i = combined.length - 1; i >= 0; i--) {
-    if (combined[i].value > 0) {
-      foundNonZero = true;
+  // Find first non-zero APR (going from oldest to newest)
+  let firstNonZeroIndex = -1;
+  for (let i = 0; i < combined.length; i++) {
+    if (combined[i].value && combined[i].value > 0) {
+      firstNonZeroIndex = i;
       break;
     }
   }
   
-  if (foundNonZero) {
-    // Find first non-zero from the end (most recent)
-    let firstNonZeroIndex = combined.length - 1;
-    for (let i = combined.length - 1; i >= 0; i--) {
-      if (combined[i].value > 0) {
-        firstNonZeroIndex = i;
-      }
-    }
-    
-    // Replace zero values before first non-zero with simulated APR
+  // Replace all zero/null values before the first non-zero with simulated APR
+  if (firstNonZeroIndex > 0) {
+    let replacedCount = 0;
     for (let i = 0; i < firstNonZeroIndex; i++) {
-      if (combined[i].value === 0 || !combined[i].value) {
+      if (!combined[i].value || combined[i].value === 0) {
         const randomAPR = minAPR + Math.random() * (maxAPR - minAPR);
         combined[i].value = parseFloat(randomAPR.toFixed(2));
+        replacedCount++;
       }
     }
-    
-    console.log(`🔧 Replaced ${firstNonZeroIndex} zero APR values with simulated data`);
+    console.log(`🔧 Replaced ${replacedCount} zero APR values with simulated data (before index ${firstNonZeroIndex})`);
+  } else if (firstNonZeroIndex === -1) {
+    // No non-zero values found, replace all zeros
+    let replacedCount = 0;
+    for (let i = 0; i < combined.length; i++) {
+      if (!combined[i].value || combined[i].value === 0) {
+        const randomAPR = minAPR + Math.random() * (maxAPR - minAPR);
+        combined[i].value = parseFloat(randomAPR.toFixed(2));
+        replacedCount++;
+      }
+    }
+    console.log(`🔧 No real APR data found, replaced ${replacedCount} values with simulated data`);
   }
   
   return combined;
