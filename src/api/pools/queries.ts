@@ -180,6 +180,36 @@ const fillMissingHistoricalData = (
   const combined = [...simulatedData, ...data];
   combined.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
   
+  // Replace zero APR values with simulated values in the historical period
+  // (data before earliest non-zero APR should have simulated values)
+  let foundNonZero = false;
+  for (let i = combined.length - 1; i >= 0; i--) {
+    if (combined[i].value > 0) {
+      foundNonZero = true;
+      break;
+    }
+  }
+  
+  if (foundNonZero) {
+    // Find first non-zero from the end (most recent)
+    let firstNonZeroIndex = combined.length - 1;
+    for (let i = combined.length - 1; i >= 0; i--) {
+      if (combined[i].value > 0) {
+        firstNonZeroIndex = i;
+      }
+    }
+    
+    // Replace zero values before first non-zero with simulated APR
+    for (let i = 0; i < firstNonZeroIndex; i++) {
+      if (combined[i].value === 0 || !combined[i].value) {
+        const randomAPR = minAPR + Math.random() * (maxAPR - minAPR);
+        combined[i].value = parseFloat(randomAPR.toFixed(2));
+      }
+    }
+    
+    console.log(`🔧 Replaced ${firstNonZeroIndex} zero APR values with simulated data`);
+  }
+  
   return combined;
 };
 
