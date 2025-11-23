@@ -338,7 +338,8 @@ const getChartDataAndEarnings = async (
 const simulateEarnings = (
   data: ILendChartData[],
   token: string,
-  interval: number = 1 // Number of days in the period (1 for daily, 7 for weekly)
+  interval: number = 1, // Number of days in the period (1 for daily, 7 for weekly)
+  sumAllPools: boolean = false // If true, sum earnings from all 4 pools
 ): (ILendChartData & { userEarning: number })[] => {
   const DEMO_DEPOSITS: Record<string, number> = {
     'DAI': 1000000,
@@ -346,23 +347,50 @@ const simulateEarnings = (
     'USDC': 1200000,
     'USDT': 1200000
   };
-  const SIMULATED_DEPOSIT = DEMO_DEPOSITS[token] || 1000000;
-  let cumulativeBalance = SIMULATED_DEPOSIT;
   
-  return data.reverse().map((item, index) => {
-    // Calculate earnings for the period based on APR
-    // APR is annual, so we divide by 365 for daily rate, then multiply by interval
-    const dailyRate = (item.lending || 0) / 100 / 365;
-    const periodEarning = cumulativeBalance * dailyRate * interval;
+  if (sumAllPools) {
+    // Sum earnings from all 4 pools
+    const balances: Record<string, number> = {};
+    Object.keys(DEMO_DEPOSITS).forEach(t => {
+      balances[t] = DEMO_DEPOSITS[t];
+    });
     
-    // Add to balance for compound effect on next period
-    cumulativeBalance += periodEarning;
+    return data.reverse().map((item, index) => {
+      // Calculate earnings for each pool and sum them
+      let totalPeriodEarning = 0;
+      
+      Object.keys(DEMO_DEPOSITS).forEach(t => {
+        const dailyRate = (item.lending || 0) / 100 / 365;
+        const periodEarning = balances[t] * dailyRate * interval;
+        balances[t] += periodEarning; // Compound for next period
+        totalPeriodEarning += periodEarning;
+      });
+      
+      return {
+        ...item,
+        userEarning: totalPeriodEarning
+      };
+    });
+  } else {
+    // Single pool earnings
+    const SIMULATED_DEPOSIT = DEMO_DEPOSITS[token] || 1000000;
+    let cumulativeBalance = SIMULATED_DEPOSIT;
     
-    return {
-      ...item,
-      userEarning: periodEarning // Show period earning (daily or weekly)
-    };
-  });
+    return data.reverse().map((item, index) => {
+      // Calculate earnings for the period based on APR
+      // APR is annual, so we divide by 365 for daily rate, then multiply by interval
+      const dailyRate = (item.lending || 0) / 100 / 365;
+      const periodEarning = cumulativeBalance * dailyRate * interval;
+      
+      // Add to balance for compound effect on next period
+      cumulativeBalance += periodEarning;
+      
+      return {
+        ...item,
+        userEarning: periodEarning // Show period earning (daily or weekly)
+      };
+    });
+  }
 };
 
 const mapUserEarnings = (
@@ -370,11 +398,12 @@ const mapUserEarnings = (
   token: string,
   earnings?: IIntervalResponse[],
   isDemoMode?: boolean,
-  interval: number = 1
+  interval: number = 1,
+  sumAllPools: boolean = false
 ): (ILendChartData & { userEarning?: number | null })[] => {
   // Use simulated earnings only in demo mode
   if (isDemoMode) {
-    return simulateEarnings(data, token, interval);
+    return simulateEarnings(data, token, interval, sumAllPools);
   }
   
   // Otherwise use real earnings data
@@ -397,7 +426,8 @@ const prepareChartData = (
   monthEarning?: IIntervalResponse[],
   halfYearEarning?: IIntervalResponse[],
   yearEarning?: IIntervalResponse[],
-  isDemoMode?: boolean
+  isDemoMode?: boolean,
+  sumAllPools?: boolean
 ): PreparedChartData => {
   return {
     poolChart: {
@@ -418,9 +448,9 @@ const prepareChartData = (
       }
     },
     chartData: {
-      "1m": mapUserEarnings(monthData.chartData, token, monthEarning, isDemoMode, monthData.interval),
-      "6m": mapUserEarnings(halfYearData.chartData, token, halfYearEarning, isDemoMode, halfYearData.interval),
-      "1y": mapUserEarnings(yearData.chartData, token, yearEarning, isDemoMode, yearData.interval)
+      "1m": mapUserEarnings(monthData.chartData, token, monthEarning, isDemoMode, monthData.interval, sumAllPools),
+      "6m": mapUserEarnings(halfYearData.chartData, token, halfYearEarning, isDemoMode, halfYearData.interval, sumAllPools),
+      "1y": mapUserEarnings(yearData.chartData, token, yearEarning, isDemoMode, yearData.interval, sumAllPools)
     }
   };
 };
@@ -444,7 +474,8 @@ export const getAreaChartAllIntervalsWithoutToken = async (
       monthEarning,
       halfYearEarning,
       yearEarning,
-      isDemoMode
+      isDemoMode,
+      true // Sum earnings from all 4 pools on main page
     );
   } catch (error: any) {
     console.error(`Failed to fetch area chart data: ${error.message}`);
@@ -470,7 +501,8 @@ export const getAreaChartAllIntervals = async (
       monthEarning,
       halfYearEarning,
       yearEarning,
-      isDemoMode
+      isDemoMode,
+      false // Show only single pool earnings on pool page
     );
   } catch (error: any) {
     console.error(`Failed to fetch area chart data: ${error.message}`);

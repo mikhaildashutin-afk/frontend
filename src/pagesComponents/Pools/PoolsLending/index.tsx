@@ -328,7 +328,7 @@ export const PoolsLending = observer(
                       <Divider borderColor="black.60" />
                       <HStack justify="space-between">
                         <Text color="white">
-                          My Profit
+                          Profit
                         </Text>
                         <Text textStyle="textMono16" color="white">
                           {loading || error ? (
@@ -345,7 +345,7 @@ export const PoolsLending = observer(
                       {isDemo ? (
                         <HStack justify="space-between">
                           <Text fontSize="md" fontWeight="500" color="white">
-                            My deposit
+                            Deposit
                           </Text>
                           <Text textStyle="textMono16" color="white">
                             {formatNumber(demoAmountAssets)} {itemAsPool.token}

@@ -61,7 +61,7 @@ const DepositInfo: React.FC<DepositInfoProps> = observer(({
     <Flex alignItems="center" justifyContent="space-between">
       {!noTitle && (
         <Text fontSize="md" fontWeight="500" color="whiteAlpha.70">
-          My Deposit
+          Deposit
         </Text>
       )}
       {isLoading ? (
