@@ -133,6 +133,10 @@ const fillMissingHistoricalData = (
   const daysDifference = Math.floor((earliestRealDate.getTime() - targetStartDate.getTime()) / (1000 * 60 * 60 * 24));
   const periodsDifference = Math.floor(daysDifference / interval);
   
+  // Find first non-zero data point
+  const firstNonZeroIndex = filteredData.findIndex(d => d.value && d.value > 0);
+  const firstNonZeroDate = firstNonZeroIndex >= 0 ? filteredData[firstNonZeroIndex].from : null;
+  
   // Debug logging
   if (interval === 7 && requiredCount === 52) {
     console.log('🔍 fillMissingHistoricalData (1y):', {
@@ -140,10 +144,13 @@ const fillMissingHistoricalData = (
       filteredDataLength: filteredData.length,
       earliestRealDate: filteredData[0]?.from,
       latestRealDate: filteredData[filteredData.length - 1]?.from,
+      firstNonZeroDate,
+      firstNonZeroIndex,
       today: today.toISOString().split('T')[0],
       targetStartDate: targetStartDate.toISOString().split('T')[0],
       periodsDifference,
-      willFillGap: periodsDifference > 0
+      willFillGap: periodsDifference > 0,
+      zeroValuesAtStart: firstNonZeroIndex
     });
   }
   
@@ -175,10 +182,29 @@ const fillMissingHistoricalData = (
       currentDate.setDate(currentDate.getDate() + interval);
     }
     
-    console.log(`✅ Added ${simulatedData.length} simulated data points to fill the gap`);
+    console.log(`✅ Added ${simulatedData.length} simulated data points to fill the gap before real data`);
   }
   
-  // Combine simulated data with filtered real data
+  // Replace zero values with simulated data up to first non-zero
+  if (firstNonZeroIndex > 0) {
+    const firstRealValues = filteredData.slice(firstNonZeroIndex, firstNonZeroIndex + 5).filter(d => d.value && d.value > 0);
+    let baseAPR = firstRealValues.length > 0 
+      ? firstRealValues.reduce((sum, d) => sum + d.value, 0) / firstRealValues.length
+      : (minAPR + maxAPR) / 2;
+    
+    for (let i = firstNonZeroIndex - 1; i >= 0; i--) {
+      if (!filteredData[i].value || filteredData[i].value === 0) {
+        const randomVariation = (Math.random() - 0.5) * 2; // ±1%
+        const simulatedAPR = Math.max(minAPR, Math.min(maxAPR, baseAPR + randomVariation));
+        filteredData[i].value = parseFloat(simulatedAPR.toFixed(2));
+        baseAPR = simulatedAPR;
+      }
+    }
+    
+    console.log(`✅ Replaced ${firstNonZeroIndex} zero values with simulated data`);
+  }
+  
+  // Combine simulated data with filtered real data (now with replaced zeros)
   const result = [...simulatedData, ...filteredData];
   
   if (interval === 7 && requiredCount === 52) {
