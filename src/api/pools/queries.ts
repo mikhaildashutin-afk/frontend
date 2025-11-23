@@ -221,6 +221,18 @@ export const getChartData = async (
     const highestMarketData = await highestMarketResponse.json();
     const rebalanceAprData = await rebalanceAprResponse.json();
     
+    // Debug: log what backend returns
+    if (interval === 7 && intervalsCount === 52) {
+      const sortedRebalance = [...rebalanceAprData].sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
+      console.log('📥 Backend data BEFORE filling:', {
+        rebalanceCount: rebalanceAprData.length,
+        marketCount: highestMarketData.length,
+        rebalanceFirst: sortedRebalance[0]?.from,
+        rebalanceLast: sortedRebalance[sortedRebalance.length - 1]?.from,
+        rebalanceSample: sortedRebalance.slice(0, 3).concat(sortedRebalance.slice(-3))
+      });
+    }
+    
     // Fill missing historical data with simulated values
     const filledRebalanceData = fillMissingHistoricalData(
       rebalanceAprData,
@@ -267,20 +279,51 @@ export const getChartData = async (
     }));
     const poolChart: any[] = [];
 
-    for (let i = 0; i < marketAprChart.length; i++) {
+    // Use the longer array length to ensure we don't lose data
+    const maxLength = Math.max(marketAprChart.length, rebalanceAprChart.length);
+    
+    // Debug logging
+    if (interval === 7 && intervalsCount === 52) {
+      console.log('🔍 Combining market and rebalance data:', {
+        marketLength: marketAprChart.length,
+        rebalanceLength: rebalanceAprChart.length,
+        maxLength,
+        requiredCount: intervalsCount
+      });
+    }
+
+    for (let i = 0; i < maxLength; i++) {
       const marketValue = marketAprChart[i];
       const rebalanceValue = rebalanceAprChart[i];
+      
+      // Skip if both are undefined
+      if (!marketValue && !rebalanceValue) continue;
+      
       const chartPoint = {
-        date: marketValue.date,
-        lending: rebalanceValue.lending,
-        borrowing: marketValue.lending
+        date: (marketValue?.date || rebalanceValue?.date),
+        lending: rebalanceValue?.lending || 0,
+        borrowing: marketValue?.lending || 0
       };
 
       poolChart.push(chartPoint);
     }
 
-    const rebalanceAvgApr = poolChart.reduce((acc, el) => acc + el.lending, 0) / intervalsCount;
-    const aaveAvgApr = poolChart.reduce((acc, el) => acc + el.borrowing, 0) / intervalsCount;
+    const rebalanceAvgApr = poolChart.length > 0 
+      ? poolChart.reduce((acc, el) => acc + el.lending, 0) / poolChart.length
+      : 0;
+    const aaveAvgApr = poolChart.length > 0
+      ? poolChart.reduce((acc, el) => acc + el.borrowing, 0) / poolChart.length
+      : 0;
+
+    // Final debug logging
+    if (interval === 7 && intervalsCount === 52) {
+      console.log('✅ getChartData final result:', {
+        chartDataLength: chartData.length,
+        poolChartLength: poolChart.length,
+        firstDate: poolChart[0]?.date,
+        lastDate: poolChart[poolChart.length - 1]?.date
+      });
+    }
 
     return { chartData: chartData, poolChart, rebalanceAvgApr, aaveAvgApr };
   } catch (error: any) {
