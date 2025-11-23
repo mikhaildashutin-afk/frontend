@@ -225,22 +225,24 @@ export const getChartData = async (
     if (interval === 7 && intervalsCount === 52) {
       const sortedRebalance = [...rebalanceAprData].sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
       
-      // Find where real data (non-zero) starts
+      // Find where real data (non-zero) starts and ends
       const firstNonZero = sortedRebalance.find(d => d.value && d.value > 0);
       const lastNonZero = [...sortedRebalance].reverse().find(d => d.value && d.value > 0);
       const nonZeroCount = sortedRebalance.filter(d => d.value && d.value > 0).length;
       
-      console.log('📥 Backend data BEFORE filling:', {
-        totalCount: rebalanceAprData.length,
-        nonZeroCount: nonZeroCount,
-        zeroCount: rebalanceAprData.length - nonZeroCount,
-        firstDate: sortedRebalance[0]?.from,
-        lastDate: sortedRebalance[sortedRebalance.length - 1]?.from,
-        firstNonZeroDate: firstNonZero?.from,
-        firstNonZeroValue: firstNonZero?.value,
-        lastNonZeroDate: lastNonZero?.from,
-        lastNonZeroValue: lastNonZero?.value,
-        allDatesWithValues: sortedRebalance.map(d => ({ date: d.from, value: d.value }))
+      console.log('📥 Backend data BEFORE filling:');
+      console.log('  Total weeks:', rebalanceAprData.length);
+      console.log('  Weeks with non-zero APR:', nonZeroCount);
+      console.log('  Weeks with zero APR:', rebalanceAprData.length - nonZeroCount);
+      console.log('  Data range:', sortedRebalance[0]?.from, '→', sortedRebalance[sortedRebalance.length - 1]?.from);
+      console.log('  First NON-ZERO data:', firstNonZero?.from, '(APR:', firstNonZero?.value + '%)');
+      console.log('  Last NON-ZERO data:', lastNonZero?.from, '(APR:', lastNonZero?.value + '%)');
+      
+      // Show all dates with their values
+      console.log('  All 52 weeks:');
+      sortedRebalance.forEach((d, i) => {
+        const status = d.value && d.value > 0 ? '✅' : '❌';
+        console.log(`    ${status} Week ${i + 1}: ${d.from} → APR: ${d.value || 0}%`);
       });
     }
     
