@@ -234,7 +234,11 @@ export const getChartData = async (
         filledCount: filledRebalanceData.length,
         firstDate: filledRebalanceData[0]?.from,
         lastDate: filledRebalanceData[filledRebalanceData.length - 1]?.from,
-        requiredCount: intervalsCount
+        requiredCount: intervalsCount,
+        firstFewValues: filledRebalanceData.slice(0, 5).map((d: any) => ({
+          date: d.from,
+          apr: d.value
+        }))
       });
     }
 
@@ -372,7 +376,7 @@ const simulateEarnings = (
     });
     
     // Data is already sorted oldest first, no need to reverse
-    return data.map((item, index) => {
+    const result = data.map((item, index) => {
       // Calculate earnings for each pool and sum them
       let totalPeriodEarning = 0;
       
@@ -388,6 +392,17 @@ const simulateEarnings = (
         userEarning: totalPeriodEarning
       };
     });
+    
+    // Debug: log first few simulated earnings
+    if (data.length > 0 && interval === 7) {
+      console.log('💰 Simulated earnings (first 5):', result.slice(0, 5).map(r => ({
+        date: r.date,
+        apr: r.lending,
+        earning: r.userEarning?.toFixed(2)
+      })));
+    }
+    
+    return result;
   } else {
     // Single pool earnings
     const SIMULATED_DEPOSIT = DEMO_DEPOSITS[token] || 1000000;
