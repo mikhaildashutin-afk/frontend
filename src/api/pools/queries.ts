@@ -108,113 +108,82 @@ const fillMissingHistoricalData = (
   minAPR: number,
   maxAPR: number
 ): any[] => {
-  if (data.length === 0) return data;
+  // Use today's date as reference
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   
-  // Find the earliest and latest dates from real data
-  const dates = data.map(d => new Date(d.from).getTime());
-  const earliestTimestamp = Math.min(...dates);
-  const latestTimestamp = Math.max(...dates);
-  const earliestDate = new Date(earliestTimestamp);
-  const latestDate = new Date(latestTimestamp);
-  
-  // Calculate the target start date (requiredCount * interval days/weeks ago from latest data)
-  const targetStartDate = new Date(latestDate);
+  // Calculate the target start date (requiredCount * interval days ago from today)
+  const targetStartDate = new Date(today);
   targetStartDate.setDate(targetStartDate.getDate() - (requiredCount * interval));
   
-  // Calculate how many periods we need to fill
-  const daysDifference = Math.floor((earliestDate.getTime() - targetStartDate.getTime()) / (1000 * 60 * 60 * 24));
-  const periodsDifference = Math.floor(daysDifference / interval);
+  // Create a Map of real data by date for quick lookup
+  const realDataMap = new Map<string, number>();
+  data.forEach(item => {
+    const dateKey = item.from;
+    if (item.value && item.value > 0) {
+      realDataMap.set(dateKey, item.value);
+    }
+  });
+  
+  // Generate complete dataset for the full period
+  const completeData = [];
+  let currentDate = new Date(targetStartDate);
+  
+  // Track last known good APR for smooth transitions
+  let lastKnownAPR = (minAPR + maxAPR) / 2;
+  
+  for (let i = 0; i < requiredCount; i++) {
+    const dateKey = currentDate.toISOString().split('T')[0];
+    
+    // Check if we have real data for this date
+    if (realDataMap.has(dateKey)) {
+      const realValue = realDataMap.get(dateKey)!;
+      completeData.push({
+        value: realValue,
+        from: dateKey
+      });
+      lastKnownAPR = realValue; // Update last known APR
+    } else {
+      // Generate simulated data
+      // Use last known APR as base with small random variation
+      const randomVariation = (Math.random() - 0.5) * 2; // ±1%
+      const simulatedAPR = Math.max(minAPR, Math.min(maxAPR, lastKnownAPR + randomVariation));
+      
+      completeData.push({
+        value: parseFloat(simulatedAPR.toFixed(2)),
+        from: dateKey
+      });
+      lastKnownAPR = simulatedAPR; // Update for next iteration
+    }
+    
+    // Move to next period
+    currentDate.setDate(currentDate.getDate() + interval);
+  }
   
   // Debug logging
   if (interval === 1 && requiredCount === 30) {
     console.log('🔍 fillMissingHistoricalData (1m):', {
-      dataLength: data.length,
-      earliestRealDate: earliestDate.toISOString().split('T')[0],
-      latestRealDate: latestDate.toISOString().split('T')[0],
-      targetStartDate: targetStartDate.toISOString().split('T')[0],
-      daysDifference,
-      periodsDifference,
-      willFill: periodsDifference > 0
+      originalDataLength: data.length,
+      realDataPoints: realDataMap.size,
+      completeDataLength: completeData.length,
+      firstDate: completeData[0]?.from,
+      lastDate: completeData[completeData.length - 1]?.from,
+      sampleData: completeData.slice(0, 3).concat(completeData.slice(-3))
     });
   }
   
   if (interval === 7 && requiredCount === 52) {
     console.log('🔍 fillMissingHistoricalData (1y):', {
-      dataLength: data.length,
-      earliestRealDate: earliestDate.toISOString().split('T')[0],
-      latestRealDate: latestDate.toISOString().split('T')[0],
-      targetStartDate: targetStartDate.toISOString().split('T')[0],
-      daysDifference,
-      periodsDifference,
-      willFill: periodsDifference > 0
+      originalDataLength: data.length,
+      realDataPoints: realDataMap.size,
+      completeDataLength: completeData.length,
+      firstDate: completeData[0]?.from,
+      lastDate: completeData[completeData.length - 1]?.from,
+      sampleData: completeData.slice(0, 3).concat(completeData.slice(-3))
     });
   }
   
-  // If earliest date is already before or at target, no need to fill
-  if (periodsDifference <= 0) {
-    // Still sort the data
-    const sorted = [...data];
-    sorted.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
-    return sorted;
-  }
-  
-  const simulatedData = [];
-  
-  // Generate missing data points going backwards from earliest real data
-  for (let i = periodsDifference; i > 0; i--) {
-    const fakeDate = new Date(earliestDate);
-    fakeDate.setDate(fakeDate.getDate() - (i * interval));
-    
-    // Random APR between minAPR and maxAPR
-    const randomAPR = minAPR + Math.random() * (maxAPR - minAPR);
-    
-    simulatedData.push({
-      value: parseFloat(randomAPR.toFixed(2)),
-      from: fakeDate.toISOString().split('T')[0]
-    });
-  }
-  
-  console.log(`✅ Added ${simulatedData.length} simulated data points for ${interval === 1 ? '1m' : interval === 7 && requiredCount === 26 ? '6m' : '1y'}`);
-  
-  // Combine and sort by date (oldest first)
-  const combined = [...simulatedData, ...data];
-  combined.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
-  
-  // Replace zero APR values with simulated values in the historical period
-  // Find first non-zero APR (going from oldest to newest)
-  let firstNonZeroIndex = -1;
-  for (let i = 0; i < combined.length; i++) {
-    if (combined[i].value && combined[i].value > 0) {
-      firstNonZeroIndex = i;
-      break;
-    }
-  }
-  
-  // Replace all zero/null values before the first non-zero with simulated APR
-  if (firstNonZeroIndex > 0) {
-    let replacedCount = 0;
-    for (let i = 0; i < firstNonZeroIndex; i++) {
-      if (!combined[i].value || combined[i].value === 0) {
-        const randomAPR = minAPR + Math.random() * (maxAPR - minAPR);
-        combined[i].value = parseFloat(randomAPR.toFixed(2));
-        replacedCount++;
-      }
-    }
-    console.log(`🔧 Replaced ${replacedCount} zero APR values with simulated data (before index ${firstNonZeroIndex})`);
-  } else if (firstNonZeroIndex === -1) {
-    // No non-zero values found, replace all zeros
-    let replacedCount = 0;
-    for (let i = 0; i < combined.length; i++) {
-      if (!combined[i].value || combined[i].value === 0) {
-        const randomAPR = minAPR + Math.random() * (maxAPR - minAPR);
-        combined[i].value = parseFloat(randomAPR.toFixed(2));
-        replacedCount++;
-      }
-    }
-    console.log(`🔧 No real APR data found, replaced ${replacedCount} values with simulated data`);
-  }
-  
-  return combined;
+  return completeData;
 };
 
 export const getChartData = async (
@@ -500,17 +469,17 @@ const prepareChartData = (
   return {
     poolChart: {
       "1m": {
-        data: monthData.poolChart.reverse(),
+        data: monthData.poolChart,
         rebalanceAvg: monthData.rebalanceAvgApr,
         aaveAvg: monthData.aaveAvgApr
       },
       "6m": {
-        data: halfYearData.poolChart.reverse(),
+        data: halfYearData.poolChart,
         rebalanceAvg: halfYearData.rebalanceAvgApr,
         aaveAvg: halfYearData.aaveAvgApr
       },
       "1y": {
-        data: yearData.poolChart.reverse(),
+        data: yearData.poolChart,
         rebalanceAvg: yearData.rebalanceAvgApr,
         aaveAvg: yearData.aaveAvgApr
       }
