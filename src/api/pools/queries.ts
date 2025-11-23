@@ -110,24 +110,39 @@ const fillMissingHistoricalData = (
 ): any[] => {
   if (data.length === 0) return data;
   
-  // Find the earliest date from real data (data might be in any order)
+  // Find the earliest and latest dates from real data
   const dates = data.map(d => new Date(d.from).getTime());
   const earliestTimestamp = Math.min(...dates);
+  const latestTimestamp = Math.max(...dates);
   const earliestDate = new Date(earliestTimestamp);
+  const latestDate = new Date(latestTimestamp);
   
-  // Calculate the target start date (requiredCount * interval days/weeks ago)
-  const targetStartDate = new Date();
+  // Calculate the target start date (requiredCount * interval days/weeks ago from latest data)
+  const targetStartDate = new Date(latestDate);
   targetStartDate.setDate(targetStartDate.getDate() - (requiredCount * interval));
   
   // Calculate how many periods we need to fill
   const daysDifference = Math.floor((earliestDate.getTime() - targetStartDate.getTime()) / (1000 * 60 * 60 * 24));
   const periodsDifference = Math.floor(daysDifference / interval);
   
-  // Debug logging for year data
-  if (interval === 7 && requiredCount === 52) {
-    console.log('🔍 fillMissingHistoricalData:', {
+  // Debug logging
+  if (interval === 1 && requiredCount === 30) {
+    console.log('🔍 fillMissingHistoricalData (1m):', {
       dataLength: data.length,
       earliestRealDate: earliestDate.toISOString().split('T')[0],
+      latestRealDate: latestDate.toISOString().split('T')[0],
+      targetStartDate: targetStartDate.toISOString().split('T')[0],
+      daysDifference,
+      periodsDifference,
+      willFill: periodsDifference > 0
+    });
+  }
+  
+  if (interval === 7 && requiredCount === 52) {
+    console.log('🔍 fillMissingHistoricalData (1y):', {
+      dataLength: data.length,
+      earliestRealDate: earliestDate.toISOString().split('T')[0],
+      latestRealDate: latestDate.toISOString().split('T')[0],
       targetStartDate: targetStartDate.toISOString().split('T')[0],
       daysDifference,
       periodsDifference,
@@ -137,7 +152,10 @@ const fillMissingHistoricalData = (
   
   // If earliest date is already before or at target, no need to fill
   if (periodsDifference <= 0) {
-    return data;
+    // Still sort the data
+    const sorted = [...data];
+    sorted.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
+    return sorted;
   }
   
   const simulatedData = [];
@@ -156,9 +174,7 @@ const fillMissingHistoricalData = (
     });
   }
   
-  if (interval === 7 && requiredCount === 52) {
-    console.log('✅ Added simulated data points:', simulatedData.length);
-  }
+  console.log(`✅ Added ${simulatedData.length} simulated data points for ${interval === 1 ? '1m' : interval === 7 && requiredCount === 26 ? '6m' : '1y'}`);
   
   // Combine and sort by date (oldest first)
   const combined = [...simulatedData, ...data];
@@ -355,7 +371,8 @@ const simulateEarnings = (
       balances[t] = DEMO_DEPOSITS[t];
     });
     
-    return data.reverse().map((item, index) => {
+    // Data is already sorted oldest first, no need to reverse
+    return data.map((item, index) => {
       // Calculate earnings for each pool and sum them
       let totalPeriodEarning = 0;
       
@@ -376,7 +393,8 @@ const simulateEarnings = (
     const SIMULATED_DEPOSIT = DEMO_DEPOSITS[token] || 1000000;
     let cumulativeBalance = SIMULATED_DEPOSIT;
     
-    return data.reverse().map((item, index) => {
+    // Data is already sorted oldest first, no need to reverse
+    return data.map((item, index) => {
       // Calculate earnings for the period based on APR
       // APR is annual, so we divide by 365 for daily rate, then multiply by interval
       const dailyRate = (item.lending || 0) / 100 / 365;
@@ -407,8 +425,9 @@ const mapUserEarnings = (
   }
   
   // Otherwise use real earnings data
-  if (!earnings) return data.reverse();
-  return data.reverse().map(item => {
+  // Data is already sorted oldest first from fillMissingHistoricalData
+  if (!earnings) return data;
+  return data.map(item => {
     // @ts-ignore
     const earning = earnings.find(el => el.from === item.date);
     return {
