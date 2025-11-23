@@ -116,35 +116,44 @@ const fillMissingHistoricalData = (
   const targetStartDate = new Date(today);
   targetStartDate.setDate(targetStartDate.getDate() - (requiredCount * interval));
   
-  // Create a Map of real data by date for quick lookup
-  const realDataMap = new Map<string, number>();
+  // Create a Map of ALL data (including zeros and nulls) by date for quick lookup
+  const realDataMap = new Map<string, any>();
   data.forEach(item => {
     const dateKey = item.from;
-    if (item.value && item.value > 0) {
-      realDataMap.set(dateKey, item.value);
-    }
+    realDataMap.set(dateKey, item);
   });
   
   // Generate complete dataset for the full period
-  const completeData = [];
+  const completeData: Array<{ value: number; from: string }> = [];
   let currentDate = new Date(targetStartDate);
   
   // Track last known good APR for smooth transitions
   let lastKnownAPR = (minAPR + maxAPR) / 2;
   
+  // First pass: collect all real non-zero values to update lastKnownAPR
+  const realNonZeroValues: Array<{ date: string; value: number }> = [];
+  data.forEach(item => {
+    if (item.value && item.value > 0) {
+      realNonZeroValues.push({ date: item.from, value: item.value });
+    }
+  });
+  realNonZeroValues.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  
   for (let i = 0; i < requiredCount; i++) {
     const dateKey = currentDate.toISOString().split('T')[0];
     
     // Check if we have real data for this date
-    if (realDataMap.has(dateKey)) {
-      const realValue = realDataMap.get(dateKey)!;
+    const realItem = realDataMap.get(dateKey);
+    
+    if (realItem && realItem.value && realItem.value > 0) {
+      // Use real data
       completeData.push({
-        value: realValue,
+        value: realItem.value,
         from: dateKey
       });
-      lastKnownAPR = realValue; // Update last known APR
+      lastKnownAPR = realItem.value; // Update last known APR
     } else {
-      // Generate simulated data
+      // No real data or zero/null value - generate simulated data
       // Use last known APR as base with small random variation
       const randomVariation = (Math.random() - 0.5) * 2; // ±1%
       const simulatedAPR = Math.max(minAPR, Math.min(maxAPR, lastKnownAPR + randomVariation));
@@ -162,9 +171,17 @@ const fillMissingHistoricalData = (
   
   // Debug logging
   if (interval === 1 && requiredCount === 30) {
+    const realCount = completeData.filter((_, idx) => {
+      const dateKey = completeData[idx].from;
+      const realItem = realDataMap.get(dateKey);
+      return realItem && realItem.value && realItem.value > 0;
+    }).length;
+    
     console.log('🔍 fillMissingHistoricalData (1m):', {
       originalDataLength: data.length,
-      realDataPoints: realDataMap.size,
+      realDataPoints: realNonZeroValues.length,
+      realUsedInResult: realCount,
+      simulatedPoints: completeData.length - realCount,
       completeDataLength: completeData.length,
       firstDate: completeData[0]?.from,
       lastDate: completeData[completeData.length - 1]?.from,
@@ -173,9 +190,17 @@ const fillMissingHistoricalData = (
   }
   
   if (interval === 7 && requiredCount === 52) {
+    const realCount = completeData.filter((_, idx) => {
+      const dateKey = completeData[idx].from;
+      const realItem = realDataMap.get(dateKey);
+      return realItem && realItem.value && realItem.value > 0;
+    }).length;
+    
     console.log('🔍 fillMissingHistoricalData (1y):', {
       originalDataLength: data.length,
-      realDataPoints: realDataMap.size,
+      realDataPoints: realNonZeroValues.length,
+      realUsedInResult: realCount,
+      simulatedPoints: completeData.length - realCount,
       completeDataLength: completeData.length,
       firstDate: completeData[0]?.from,
       lastDate: completeData[completeData.length - 1]?.from,
