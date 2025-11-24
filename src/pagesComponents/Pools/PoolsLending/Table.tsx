@@ -144,7 +144,7 @@ const PoolsLendingTable = observer(({ pools, isLoading, error, chartData }: Pool
               </Text>
             </Th>
             <Th maxW="118px" p="16px 12px" textTransform="unset">
-              <Text textStyle="text14">Rebalance APY</Text>
+              <Text textStyle="text14">Predictus APY</Text>
             </Th>
             <Th maxW="118px" p="16px 12px" textTransform="unset">
               <Text

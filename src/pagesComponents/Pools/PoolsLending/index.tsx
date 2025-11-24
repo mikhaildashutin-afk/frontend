@@ -269,7 +269,7 @@ export const PoolsLending = observer(
                         alignItems="center"
                       >
                         <Text color="white" borderBottom={"dashed 1px gray"}>
-                          Rebalance APY
+                          Predictus APY
                         </Text>
                         {getProtocolIcons(item.token)}
                         <Text textStyle="textMono16" ml={2}>
@@ -287,7 +287,7 @@ export const PoolsLending = observer(
                     <Tooltip label={(() => {
                       const marketAPY = item.avgApr - item.apr;
                       const advantage = marketAPY > 0 ? ((item.apr / marketAPY) * 100).toFixed(0) : 0;
-                      return `Average market APY in last 30 days. Rebalance is ${advantage}% higher`;
+                      return `Average market APY in last 30 days. Predictus is ${advantage}% higher`;
                     })()}>
                       <Text borderBottom={"dashed 1px gray"} color="white">
                         Market av. APY

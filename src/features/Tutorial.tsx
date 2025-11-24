@@ -34,7 +34,7 @@ const steps: TutorialStep[] = [
   },
   {
     target: ".step-3",
-    content: "Here you can see the actual state and average Rebalance APYs",
+    content: "Here you can see the actual state and average Predictus APYs",
     disableBeacon: true
   },
   {

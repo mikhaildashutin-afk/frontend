@@ -50,10 +50,15 @@ export const AppHeader = observer(() => {
         w="100%"
       >
         <Link as={NextLink} href={ROUTE_PATHS.lending}>
-          <Image
-            src={media ? LogoMob.src : LogoDesc.src}
-            w={{ base: "30px", lg: media ? "30px" : "150px" }}
-          />
+          <Text
+            fontFamily="Georgia, serif"
+            fontSize={{ base: "18px", lg: "22px" }}
+            fontWeight="500"
+            color="white"
+            letterSpacing="0.5px"
+          >
+            Predictus Fund I
+          </Text>
         </Link>
 
         {!media && <AppNav />}

@@ -11,8 +11,8 @@ import Script from "next/script";
 import CommonEvent from "@/components/common-event";
 
 export const metadata: Metadata = {
-  title: "Rebalance",
-  description: "Rebalance"
+  title: "Predictus Fund I",
+  description: "Predictus Fund I"
 };
 
 export default function RootLayout({

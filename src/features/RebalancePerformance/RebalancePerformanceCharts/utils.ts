@@ -25,7 +25,7 @@ export const connectedAreaLines = [
 
 export const areaLines = [
   {
-    name: "Rebalance Performance APY, %",
+    name: "Predictus Performance APY, %",
     type: ROUTES_TYPE.lending
   }
 ];
