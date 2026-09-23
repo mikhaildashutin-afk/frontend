@@ -63,9 +63,10 @@ export const getTasks = async (address: string) => {
 
 export const completeTask = async (address: string, taskName: string) => {
   try {
-    const response = await fetch(`${endpoint}/lending/complete-task/${address}/${taskName}`, {
-      method: "POST"
-    });
+    const response = await fetch(
+      `${endpoint}/lending/complete-task/${address}/${encodeURIComponent(taskName)}`,
+      { method: "POST" }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

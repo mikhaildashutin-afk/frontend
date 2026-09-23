@@ -1,5 +1,5 @@
 import { action, makeObservable, observable, runInAction } from "mobx";
-import { getAreaChartAllIntervals, getChartData, getPools } from "../../api/pools/queries";
+import { getAreaChartAllIntervals, getPools } from "../../api/pools/queries";
 import { IPoolData } from "../pools/types";
 import { ICHAIN } from "@/types";
 

@@ -9,56 +9,73 @@ type Token = {
   decimals?: number;
 };
 
+/**
+ * Проверяет, есть ли у пользователя ненулевой баланс в активах хотя бы по одному vault.
+ *
+ * Rebalancer vault — ERC-4626. Баланс в активах получается связкой:
+ *   shares = balanceOf(owner)
+ *   assets = convertToAssets(shares)
+ */
 export const useBalanceOfAssets = (tokens: Token[], ownerAddress?: `0x${string}`) => {
   const [hasBalance, setHasBalance] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  if (!tokens || ownerAddress === "0x" || !ownerAddress) {
-    return { hasBalance, isLoading: false };
-  }
+  const validTokens = tokens.filter((t) => !!t.contractAddress && !!t.decimals);
+  const enabled = validTokens.length > 0 && !!ownerAddress && ownerAddress !== "0x";
 
-  const contracts =
-    tokens.length > 0 && ownerAddress !== "0x"
-      ? tokens.map(({ contractAddress }) => ({
-          address: contractAddress,
-          abi: ABI_REBALANCE,
-          functionName: "getBalanceOfAsset",
-          args: [ownerAddress]
-        }))
-      : [];
+  const balanceContracts = validTokens.map(({ contractAddress }) => ({
+    address: contractAddress as `0x${string}`,
+    abi: ABI_REBALANCE,
+    functionName: "balanceOf",
+    args: [ownerAddress as `0x${string}`]
+  }));
 
-  const {
-    data,
-    isLoading: loading,
-    refetch
-  } = useReadContracts({
-    contracts,
+  const { data: rawShares, isLoading: loadingShares, refetch } = useReadContracts({
+    contracts: balanceContracts,
     query: {
-      enabled: tokens.length > 0 && !!ownerAddress && contracts.length > 0
+      enabled
+    }
+  });
+
+  const shares = rawShares?.map((r) => (r.status === "success" ? (r.result as bigint) : BigInt(0))) ?? [];
+
+  const assetContracts = validTokens.map(({ contractAddress }, index) => ({
+    address: contractAddress as `0x${string}`,
+    abi: ABI_REBALANCE,
+    functionName: "convertToAssets",
+    args: [shares[index] ?? BigInt(0)]
+  }));
+
+  const { data: rawAssets, isLoading: loadingAssets } = useReadContracts({
+    contracts: assetContracts,
+    query: {
+      enabled: enabled && shares.length === validTokens.length
     }
   });
 
   useEffect(() => {
-    if (data) {
-      const balances = data.map((result, index) => {
-        // @ts-ignore
-        const balance = result ? formatUnits(result.result, tokens[index].decimals) : "0";
-        return parseFloat(balance);
+    if (rawAssets && validTokens.length > 0) {
+      const balances = rawAssets.map((result, index) => {
+        if (result.status !== "success") return 0;
+        const decimals = validTokens[index].decimals ?? 18;
+        return parseFloat(formatUnits(result.result as bigint, decimals));
       });
-
-      setHasBalance(balances.some(balance => balance > 0));
+      setHasBalance(balances.some((balance) => balance > 0));
+    } else {
+      setHasBalance(false);
     }
 
-    setIsLoading(loading);
-  }, [data, loading, tokens]);
+    setIsLoading(loadingShares || loadingAssets);
+  }, [rawAssets, loadingShares, loadingAssets]);
 
   useEffect(() => {
+    if (!enabled) return;
     const interval = setInterval(() => {
       refetch();
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [refetch]);
+  }, [refetch, enabled]);
 
   return { hasBalance, isLoading };
 };

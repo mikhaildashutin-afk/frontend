@@ -181,7 +181,7 @@ export const DepositTab: FC<IDepositTabProps> = observer(({ pool, onClose }) => 
 
   useEffect(() => {
     if (sharesData) {
-      const stringNumber = formatBigNumber(sharesData, pool.decimals);
+      const stringNumber = formatBigNumber(sharesData as bigint, pool.decimals);
       const preparedSharesValue = formatSharesNumber(stringNumber);
       setSharesPreview(preparedSharesValue);
     }
@@ -190,7 +190,7 @@ export const DepositTab: FC<IDepositTabProps> = observer(({ pool, onClose }) => 
   useEffect(() => {
     if (formik.values.deposit) {
       const checkNeedsApproval = () => {
-        const formattedAllowance = Number(formatBigNumber(allowance, pool.decimals));
+        const formattedAllowance = Number(formatBigNumber(allowance as bigint, pool.decimals));
         const isApprovalNeeded = !allowance || formattedAllowance < Number(formik.values.deposit);
         setNeedsApproval(isApprovalNeeded);
       };

@@ -1,7 +1,7 @@
 import { ICHAIN } from "@/types";
 import { IIntervalResponse, ILendChartData, IPoolData, IPoolsData, ITotalProfit } from "./types";
 
-export const endpoint = process.env.NEXT_PUBLIC_API_URL || "http://localhost:2002";
+export const endpoint = process.env.NEXT_PUBLIC_API_URL || "http://localhost:2004";
 
 export const getPools = async (
   type: "lending" | "borrowing",
@@ -182,7 +182,8 @@ const fetchHighestAprToken = async (dayInterval: number, network: ICHAIN): Promi
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return response.text();
+    // Контроллер возвращает JSON-строку (TokenEnum), а не "text"
+    return (await response.json()) as string;
   } catch (error: any) {
     console.error(`Failed to fetch highest apr token: ${error.message}`);
     throw error;
@@ -329,7 +330,7 @@ export const getPersonalEarnings = async (
 ) => {
   try {
     const userEarningsResponse = await fetch(
-      `${endpoint}/lending/${token}/user-earned-ticks/${address}/${interval}/${intervalsCount}`,
+      `${endpoint}/lending/${token}/user-earned-ticks/${address}/${interval}/${intervalsCount}?network=${network}`,
       { cache: "no-store" }
     );
     const avgAPRTiksResponse = await fetch(
