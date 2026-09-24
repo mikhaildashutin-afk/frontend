@@ -133,61 +133,60 @@ export const LOCK_TOKENS_CONTRACT_ADDRESS = "0x4c2db56998fEEb681bf82524b0cF8Dc4D
 
 export const INSUFFICIENT_BALANCE_ERROR = "You balance is insufficient";
 
+// RainbowKit theme in Invictus tokens (see src/themes/styles/colors.ts).
 export const RAINBOW_THEME = {
   colors: {
-    accentColor: "hsl(0 0% 47%)",
-    accentColorForeground: "hsl(0, 0%, 100%)",
-    actionButtonBorder: "hsl(0, 0%, 0%)",
-    actionButtonBorderMobile: "hsl(0, 0%, 0%)",
-    actionButtonSecondaryBackground: "hsl(0, 0%, 100%)",
-    closeButton: "hsl(0, 0%, 73%)",
-    closeButtonBackground: "hsl(0, 0%, 8%)",
-    connectButtonBackground: "hsl(0, 0%, 0%)",
-    connectButtonBackgroundError: "hsl(360,100%,64%)",
-    connectButtonInnerBackground: "hsl(0, 0%, 9%)",
-    connectButtonText: "hsl(0, 0%, 100%)",
-    connectButtonTextError: "hsl(0,0%,100%)",
-    error: "hsl(0,0%,100%)",
-    generalBorder: "hsl(0, 0%, 8%)",
-    generalBorderDim: "rgba(0, 0, 0, 0.03)",
-    menuItemBackground: "hsl(227, 0%, 8%)",
-    modalBackdrop: "rgba(0, 0, 0, 0.5)",
-    modalBackground: "hsl(0, 0%, 0%)",
-    modalBorder: "hsl(0, 0%, 8%)",
-    modalText: "hsl(0, 0%, 100%)",
-    modalTextDim: "rgba(60, 66, 66, 0.3)",
-    modalTextSecondary: "hsl(0, 0%, 60%)",
-    profileAction: "hsl(0, 0%, 15%)",
-    profileActionHover: "hsl(0, 0%, 25%)",
-    profileForeground: "hsl(0, 0%, 6%)",
-    selectedOptionBorder: "hsl(0 0% 47%)",
-    downloadBottomCardBackground:
-      '"linear-gradient(126deg, rgba(255, 255, 255, 0) 9.49%, rgba(171, 171, 171, 0.04) 71.04%), #FFFFFF"',
-    downloadTopCardBackground:
-      '"linear-gradient(126deg, rgba(171, 171, 171, 0.2) 9.49%, rgba(255, 255, 255, 0) 71.04%), #FFFFFF"',
-    connectionIndicator: "hsl(107, 100%, 44%)",
-    standby: "hsl(47, 100%, 63%)"
+    accentColor: "var(--inv-accent)",
+    accentColorForeground: "var(--inv-bg)",
+    actionButtonBorder: "var(--inv-line)",
+    actionButtonBorderMobile: "var(--inv-line)",
+    actionButtonSecondaryBackground: "var(--inv-bg3)",
+    closeButton: "var(--inv-ink3)",
+    closeButtonBackground: "var(--inv-bg3)",
+    connectButtonBackground: "var(--inv-bg)",
+    connectButtonBackgroundError: "var(--inv-neg)",
+    connectButtonInnerBackground: "var(--inv-bg3)",
+    connectButtonText: "var(--inv-ink)",
+    connectButtonTextError: "var(--inv-ink)",
+    error: "var(--inv-neg)",
+    generalBorder: "var(--inv-line)",
+    generalBorderDim: "var(--inv-bg3)",
+    menuItemBackground: "var(--inv-bg3)",
+    modalBackdrop: "rgba(10, 11, 13, 0.6)",
+    modalBackground: "var(--inv-bg2)",
+    modalBorder: "var(--inv-line)",
+    modalText: "var(--inv-ink)",
+    modalTextDim: "var(--inv-muted)",
+    modalTextSecondary: "var(--inv-ink3)",
+    profileAction: "var(--inv-bg3)",
+    profileActionHover: "var(--inv-line)",
+    profileForeground: "var(--inv-bg2)",
+    selectedOptionBorder: "var(--inv-accent)",
+    downloadBottomCardBackground: "var(--inv-bg2)",
+    downloadTopCardBackground: "var(--inv-bg3)",
+    connectionIndicator: "var(--inv-pos)",
+    standby: "var(--inv-accent)"
   },
   radii: {
-    actionButton: "0px",
-    connectButton: "0px",
-    menuButton: "0px",
-    modal: "0px",
-    modalMobile: "0px"
+    actionButton: "2px",
+    connectButton: "2px",
+    menuButton: "2px",
+    modal: "2px",
+    modalMobile: "2px"
   },
   shadows: {
-    connectButton: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-    dialog: "0px 8px 32px rgba(0, 0, 0, 0.32)",
-    profileDetailsAction: "0px 2px 6px rgba(37, 41, 46, 0.04)",
-    selectedOption: "0px 2px 6px rgba(0, 0, 0, 0.24)",
-    selectedWallet: "0px 2px 6px rgba(0, 0, 0, 0.12)",
-    walletLogo: "0px 2px 16px rgba(0, 0, 0, 0.16)"
+    connectButton: "none",
+    dialog: "none",
+    profileDetailsAction: "none",
+    selectedOption: "none",
+    selectedWallet: "none",
+    walletLogo: "none"
   },
   blurs: {
-    modalOverlay: "blur(0px)" // e.g. 'blur(4px)'
+    modalOverlay: "blur(4px)"
   },
   fonts: {
-    body: "..." // default
+    body: "inherit"
   }
 };
 
