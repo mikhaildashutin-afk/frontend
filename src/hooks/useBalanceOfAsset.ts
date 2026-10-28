@@ -3,6 +3,14 @@ import { useEffect, useState } from "react";
 import { useReadContract } from "wagmi";
 
 import { ABI_REBALANCE } from "../abi/rebalance";
+import { DEMO_ADDRESS, DEMO_MODE } from "@/demo/config";
+import { demoLedger } from "@/demo/ledger";
+import { autorun } from "mobx";
+
+const demoBalance = (contractAddress: string, ownerAddress: string) =>
+  ownerAddress.toLowerCase() === DEMO_ADDRESS.toLowerCase() && contractAddress
+    ? demoLedger.position(contractAddress)
+    : 0;
 
 export const useBalanceOfAsset = (
   contractAddress: `0x${string}`,
@@ -20,18 +28,26 @@ export const useBalanceOfAsset = (
     address: contractAddress,
     abi: ABI_REBALANCE,
     functionName: "getBalanceOfAsset",
-    args: [ownerAddress]
+    args: [ownerAddress],
+    query: { enabled: !DEMO_MODE }
   });
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      // Re-run whenever the demo ledger changes (deposit/withdraw).
+      const dispose = autorun(() => setBalance(demoBalance(contractAddress, ownerAddress)));
+      setIsLoading(false);
+      return dispose;
+    }
     if (data) {
       const formattedBalance = formatUnits(data, decimals);
       setBalance(+formattedBalance);
     }
     setIsLoading(false);
-  }, [data, loading, decimals]);
+  }, [data, loading, decimals, contractAddress, ownerAddress]);
 
   useEffect(() => {
+    if (DEMO_MODE) return;
     const interval = setInterval(() => {
       refetch();
     }, 3000);

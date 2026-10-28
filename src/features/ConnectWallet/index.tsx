@@ -42,9 +42,10 @@ export const ConnectWallet = ({
     return (
       <Button
         id={id}
-        p={variant ? "16px 24px" : 0}
+        p={variant ? "16px 24px" : title ? 0 : "0 14px"}
+        h={!variant && !title ? "34px" : undefined}
         onClick={onOpenConnectWalletModal}
-        variant={variant ? variant : title === "Deposit" ? "primaryFilled" : ""}
+        variant={variant ? variant : title === "Deposit" ? "primaryFilled" : "primaryWhite"}
         flex="1 1 0"
         width={variant ? "100%" : "auto"}
         className={className}
@@ -58,16 +59,15 @@ export const ConnectWallet = ({
     <Button
       id={id}
       onClick={onOpenConnectWalletModal}
-      variant={variant ? variant : title === "Deposit" ? "primaryFilled" : ""}
-      flex="1 1 0"
+      variant={variant ? variant : title === "Deposit" ? "primaryFilled" : "primaryWhite"}
+      // Full-width (variant) buttons sit in column layouts: a zero flex-basis would squash them.
+      flex={variant ? "0 0 auto" : "1 1 0"}
       width={variant ? "100%" : "auto"}
       mt={variant ? 4 : 0}
-      h={variant ? "52px" : "auto"}
+      h={variant ? "52px" : title ? "auto" : "36px"}
+      px={!variant && !title ? "16px" : undefined}
       minH={minHeight}
       className={className}
-      _hover={{
-        opacity: 0.8
-      }}
     >
       {title ? title : "Connect wallet"}
     </Button>

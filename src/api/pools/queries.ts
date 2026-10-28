@@ -1,5 +1,15 @@
+import { apiFetch } from "@/demo/api";
 import { ICHAIN } from "@/types";
-import { IIntervalResponse, ILendChartData, IPoolData, IPoolsData, ITotalProfit } from "./types";
+import {
+  IIntervalResponse,
+  ILendChartData,
+  IPoolData,
+  IPoolsData,
+  IRebalancePage,
+  IRiskMonitor,
+  ITotalProfit,
+  IVaultGovernance
+} from "./types";
 
 export const endpoint = process.env.NEXT_PUBLIC_API_URL || "http://localhost:2002";
 
@@ -8,7 +18,7 @@ export const getPools = async (
   network: ICHAIN
 ): Promise<IPoolData[]> => {
   try {
-    const response = await fetch(`${endpoint}/${type}?network=${network}`, {
+    const response = await apiFetch(`${endpoint}/${type}?network=${network}`, {
       cache: "no-store"
     });
     if (!response.ok) {
@@ -32,7 +42,10 @@ export const getPools = async (
         deposit: 0,
         risk: 1,
         borrowRate: 12.5,
-        borrowed: 1234334
+        borrowed: 1234334,
+        allocations: item?.allocations,
+        asOf: item?.asOf,
+        terms: item?.terms
       };
     });
     return [...pools];
@@ -48,7 +61,7 @@ export const getTotalProfit = async (
   network: ICHAIN
 ) => {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${endpoint}/${type}/user-earned-overall/${address}?network=${network}`,
       {
         cache: "no-store"
@@ -72,7 +85,7 @@ export const getProfitPool = async (
   network: ICHAIN
 ) => {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${endpoint}/${type}/${token}/user-earned/${address}?network=${network}`,
       {
         cache: "no-store"
@@ -96,11 +109,11 @@ export const getChartData = async (
   network: ICHAIN
 ): Promise<any> => {
   try {
-    const highestMarketResponse = await fetch(
+    const highestMarketResponse = await apiFetch(
       `${endpoint}/lending/${token}/highest-market-apr-ticks/${interval}/${intervalsCount}?network=${network}`,
       { cache: "no-store" }
     );
-    const rebalanceAprResponse = await fetch(
+    const rebalanceAprResponse = await apiFetch(
       `${endpoint}/lending/${token}/apr-ticks/${interval}/${intervalsCount}?network=${network}`,
       { cache: "no-store" }
     );
@@ -159,7 +172,7 @@ export const getUserEarnings = async (
   network: ICHAIN
 ) => {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${endpoint}/lending/user-earned-overall-ticks/${address}/${interval}/${intervalsCount}?network=${network}`,
       { cache: "no-store" }
     );
@@ -176,7 +189,7 @@ export const getUserEarnings = async (
 
 const fetchHighestAprToken = async (dayInterval: number, network: ICHAIN): Promise<string> => {
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       `${endpoint}/lending/highest-apr-token/${dayInterval}?network=${network}`
     );
     if (!response.ok) {
@@ -328,11 +341,11 @@ export const getPersonalEarnings = async (
   network: ICHAIN
 ) => {
   try {
-    const userEarningsResponse = await fetch(
+    const userEarningsResponse = await apiFetch(
       `${endpoint}/lending/${token}/user-earned-ticks/${address}/${interval}/${intervalsCount}`,
       { cache: "no-store" }
     );
-    const avgAPRTiksResponse = await fetch(
+    const avgAPRTiksResponse = await apiFetch(
       `${endpoint}/lending/${token}/apr-ticks/${interval}/${intervalsCount}?network=${network}`,
       { cache: "no-store" }
     );
@@ -363,4 +376,38 @@ export const getPersonalEarnings = async (
     console.error(`Failed to fetch personal earnings: ${error.message}`);
     throw error;
   }
+};
+
+export const getRebalances = async (
+  token: string,
+  network: ICHAIN,
+  page: number,
+  limit: number
+): Promise<IRebalancePage> => {
+  const response = await apiFetch(
+    `${endpoint}/lending/${token}/rebalances?network=${network}&page=${page}&limit=${limit}`,
+    { cache: "no-store" }
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
+/** Latest CRA assessment for the markets a vault uses or considers. */
+export const getRiskMonitor = async (token: string, network: ICHAIN): Promise<IRiskMonitor> => {
+  const response = await apiFetch(`${endpoint}/lending/${token}/risk?network=${network}`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+};
+
+/** Role holders, timelock settings and queued changes for a vault. */
+export const getVaultGovernance = async (token: string, network: ICHAIN): Promise<IVaultGovernance> => {
+  const response = await apiFetch(`${endpoint}/lending/${token}/governance?network=${network}`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
 };
