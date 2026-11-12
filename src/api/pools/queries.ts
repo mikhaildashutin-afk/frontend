@@ -1,5 +1,12 @@
 import { ICHAIN } from "@/types";
-import { IIntervalResponse, ILendChartData, IPoolData, IPoolsData, ITotalProfit } from "./types";
+import {
+  IIntervalResponse,
+  ILendChartData,
+  IPoolData,
+  IPoolsData,
+  IProviderAprTicks,
+  ITotalProfit
+} from "./types";
 
 export const endpoint = process.env.NEXT_PUBLIC_API_URL || "http://localhost:2004";
 
@@ -39,6 +46,33 @@ export const getPools = async (
   } catch (error: any) {
     console.error(`Failed to fetch pools: ${error.message}`);
     throw error;
+  }
+};
+
+export const slugifyProviderName = (name: string) =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+export const getProviderAprTicks = async (
+  interval: number,
+  intervalsCount: number,
+  token: string,
+  network: ICHAIN
+): Promise<IProviderAprTicks[]> => {
+  try {
+    const response = await fetch(
+      `${endpoint}/lending/${token}/provider-apr-ticks/${interval}/${intervalsCount}?network=${network}`,
+      { cache: "no-store" }
+    );
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return (await response.json()) as IProviderAprTicks[];
+  } catch (error: any) {
+    console.error(`Failed to fetch provider apr ticks: ${error.message}`);
+    return [];
   }
 };
 
@@ -96,6 +130,18 @@ export const getChartData = async (
   network: ICHAIN
 ): Promise<any> => {
   try {
+    const providerAprData = await getProviderAprTicks(interval, intervalsCount, token, network);
+    // Ключ линии — по АДРЕСУ провайдера (гарантированно уникален), name — только для легенды.
+    const providerLines = providerAprData.map(provider => ({
+      address: provider.address,
+      name: provider.name,
+      key: slugifyProviderName(provider.address)
+    }));
+    const providerTicksByKey: Record<string, IIntervalResponse[]> = {};
+    providerAprData.forEach(provider => {
+      providerTicksByKey[slugifyProviderName(provider.address)] = provider.ticks;
+    });
+
     const highestMarketResponse = await fetch(
       `${endpoint}/lending/${token}/highest-market-apr-ticks/${interval}/${intervalsCount}?network=${network}`,
       { cache: "no-store" }
@@ -124,20 +170,31 @@ export const getChartData = async (
       lending: el.value || 0,
       date: el.from
     }));
-    const chartData: ILendChartData[] = rebalanceAprData.map((el: any) => ({
-      lending: el.value >= 0 && el.value ? el.value : 0,
-      date: el.from
-    }));
+    const chartData: ILendChartData[] = rebalanceAprData.map((el: any, i: number) => {
+      const point: ILendChartData = {
+        lending: el.value >= 0 && el.value ? el.value : 0,
+        date: el.from
+      };
+      providerLines.forEach(({ key }) => {
+        const tick = providerTicksByKey[key]?.[i];
+        point[key] = tick?.value ?? null;
+      });
+      return point;
+    });
     const poolChart: any[] = [];
 
     for (let i = 0; i < marketAprChart.length; i++) {
       const marketValue = marketAprChart[i];
       const rebalanceValue = rebalanceAprChart[i];
-      const chartPoint = {
+      const chartPoint: Record<string, any> = {
         date: marketValue.date,
         lending: rebalanceValue.lending,
         borrowing: marketValue.lending
       };
+      providerLines.forEach(({ key }) => {
+        const tick = providerTicksByKey[key]?.[i];
+        chartPoint[key] = tick?.value ?? null;
+      });
 
       poolChart.push(chartPoint);
     }
@@ -145,7 +202,13 @@ export const getChartData = async (
     const rebalanceAvgApr = poolChart.reduce((acc, el) => acc + el.lending, 0) / intervalsCount;
     const aaveAvgApr = poolChart.reduce((acc, el) => acc + el.borrowing, 0) / intervalsCount;
 
-    return { chartData: chartData, poolChart, rebalanceAvgApr, aaveAvgApr };
+    return {
+      chartData: chartData,
+      poolChart,
+      rebalanceAvgApr,
+      aaveAvgApr,
+      providerLines
+    };
   } catch (error: any) {
     console.error(`Failed to fetch chart data: ${error.message}`);
     throw error;
@@ -270,8 +333,9 @@ const prepareChartData = (
       "1m": mapUserEarnings(monthData.chartData, monthEarning),
       "6m": mapUserEarnings(halfYearData.chartData, halfYearEarning),
       "1y": mapUserEarnings(yearData.chartData, yearEarning)
-    }
-  };
+    },
+    providers: monthData.providerLines ?? []
+  } as PreparedChartData;
 };
 
 export const getAreaChartAllIntervalsWithoutToken = async (

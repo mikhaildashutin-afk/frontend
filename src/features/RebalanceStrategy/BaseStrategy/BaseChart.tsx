@@ -13,6 +13,19 @@ import { MEDIA_QUERY_MAX } from "../../../consts";
 import { ILendChartData } from "@/api/pools/types";
 import { ROUTES_TYPE } from "@/consts/routes-type";
 
+const providerColors = [
+  "#38bdf8",
+  "#f97316",
+  "#a855f7",
+  "#f43f5e",
+  "#22c55e",
+  "#eab308",
+  "#14b8a6",
+  "#fb7185"
+];
+
+const providerColor = (index: number) => providerColors[index % providerColors.length];
+
 const areaGradient = (
   <defs>
     <linearGradient id="color-lending" x1="0" y1="0" x2="0" y2="1">
@@ -26,7 +39,7 @@ const areaGradient = (
   </defs>
 );
 
-const getAreaLines = (areas: IAreaLineProps[]) => {
+const getAreaLines = (areas: IAreaLineProps[], providers: { key: string; name: string }[] = []) => {
   const arr = areas.map((area, i) => (
     <Area
       key={i}
@@ -39,57 +52,50 @@ const getAreaLines = (areas: IAreaLineProps[]) => {
     />
   ));
 
+  providers.forEach((provider, i) => {
+    arr.push(
+      <Area
+        key={provider.key}
+        name={`${provider.name}, %`}
+        type="linear"
+        dataKey={provider.key}
+        connectNulls
+        stroke={providerColor(i)}
+        activeDot={{ r: 3, stroke: providerColor(i) }}
+        fill={`url(#color-${provider.key})`}
+      />
+    );
+  });
+
   return [...arr, areaGradient];
 };
 
-const data = [
-  {
-    date: "12.01.2024",
-    lending: 250,
-    borrowing: 170
-  },
-  {
-    date: "12.02.2024",
-    lending: 410,
-    borrowing: 218
-  },
-  {
-    date: "12.05.2024",
-    lending: 150,
-    borrowing: 55
-  },
-  {
-    date: "12.08.2024",
-    lending: 20,
-    borrowing: 178
-  },
-  {
-    date: "12.09.2024",
-    lending: 320,
-    borrowing: 188
-  },
-  {
-    date: "12.10.2024",
-    lending: 290,
-    borrowing: 230
-  }
-  // {
-  //   date: "12.11.2024",
-  //   lending: 3490,
-  //   borrowing: 4300
-  // }
-];
+const providerGradients = (providers: { key: string; name: string }[]) => (
+  <defs>
+    {providers.map((p, i) => (
+      <linearGradient key={p.key} id={`color-${p.key}`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="5%" stopColor={providerColor(i)} stopOpacity={0.6} />
+        <stop offset="95%" stopColor={providerColor(i)} stopOpacity={0} />
+      </linearGradient>
+    ))}
+  </defs>
+);
 
 interface IChartData {
   chartData: ILendChartData[];
   poolChart: any[];
 }
 
-export const BaseChart = ({ chartData }: { chartData: IChartData }) => {
+export const BaseChart = ({
+  chartData
+}: {
+  chartData: IChartData & { providers?: { address: string; name: string; key: string }[] };
+}) => {
   const [media] = useMediaQuery(MEDIA_QUERY_MAX);
   const { selectedDate, setSelectDate } = useDateSwitcher(DATES[0]);
   const [smDown] = useMediaQuery("(max-width: 420px)");
 
+  // Aave V3 и остальные провайдеры приходят отдельными линиями из provider-apr-ticks.
   const areaLines = [
     {
       name: "Rebalance APY\n",
@@ -97,11 +103,6 @@ export const BaseChart = ({ chartData }: { chartData: IChartData }) => {
         2
       )}% average)`,
       type: ROUTES_TYPE.lending
-    },
-    {
-      name: "Aave APY\n",
-      subtext: `(${chartData.poolChart[selectedDate.name as any].aaveAvg.toFixed(2)}% average)`,
-      type: ROUTES_TYPE.borrowing
     }
   ];
 
@@ -129,8 +130,12 @@ export const BaseChart = ({ chartData }: { chartData: IChartData }) => {
 
       <AreaChart
         data={chartData.poolChart[selectedDate.name as any].data}
-        lines={getAreaLines(areaLines)}
-        gradient={areaGradient}
+        lines={getAreaLines(areaLines, chartData.providers ?? [])}
+        gradient={
+          (chartData.providers ?? []).length > 0
+            ? providerGradients(chartData.providers ?? [])
+            : areaGradient
+        }
         tickFormatter={tickFormatter}
         tooltipName
       />
@@ -148,6 +153,13 @@ export const BaseChart = ({ chartData }: { chartData: IChartData }) => {
             text={elem.name}
             subText={elem.subtext}
             color={colorsArea[elem.type]}
+          />
+        ))}
+        {(chartData.providers ?? []).map((provider, i) => (
+          <LegendAreaChart
+            key={provider.key}
+            text={`${provider.name}, %`}
+            color={providerColor(i)}
           />
         ))}
       </Flex>

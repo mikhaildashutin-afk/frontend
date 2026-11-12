@@ -30,6 +30,13 @@ export interface IPoolsData {
 export interface ILendChartData {
   date: Date,
   lending: number | null
+  [key: string]: number | null | Date
+}
+
+export interface IProviderAprTicks {
+  address: string;
+  name: string;
+  ticks: IIntervalResponse[];
 }
 
 export interface IIntervalResponse {
@@ -66,7 +73,8 @@ export interface IAreaChartData {
     '1m': ILendChartData[],
     '6m': ILendChartData[],
     '1y': ILendChartData[],
-  }
+  },
+  providers?: { address: string; name: string; key: string }[]
 }
 
 export interface ITotalProfit {

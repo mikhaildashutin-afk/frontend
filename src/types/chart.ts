@@ -9,6 +9,7 @@ interface ChartData {
     date: string;
     value: number;
   }[];
+  providerLines?: { address: string; name: string; key: string }[];
 }
 
 interface PreparedChartData {
@@ -34,4 +35,5 @@ interface PreparedChartData {
     "6m": (ChartData["chartData"][0] & { userEarning?: number | null })[];
     "1y": (ChartData["chartData"][0] & { userEarning?: number | null })[];
   };
+  providers?: { address: string; name: string; key: string }[];
 }
