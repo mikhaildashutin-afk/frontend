@@ -89,7 +89,7 @@ const ConnectWalletModal = ({ isOpen, onClose }: IDefaultModalProps) => {
               Connect Wallet
             </Text>
             <Text fontSize="sm" fontWeight="400">
-              To start using REBALANCE
+              To start using Invictus
             </Text>
           </DrawerHeader>
 
@@ -116,7 +116,7 @@ const ConnectWalletModal = ({ isOpen, onClose }: IDefaultModalProps) => {
             ))}
 
             <Text fontSize="xs" color="black.0">
-              By connecting, I accept REBALANCE’s{" "}
+              By connecting, I accept Invictus’s{" "}
               <Link color="greenAlpha.100">Terms of Service</Link>
             </Text>
           </DrawerBody>
@@ -128,7 +128,7 @@ const ConnectWalletModal = ({ isOpen, onClose }: IDefaultModalProps) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered>
       <ModalOverlay backdropFilter="auto" backdropBlur="3px" />
-      <ModalContent borderRadius="4px" p="24px" gap="36px" bg="#09090B">
+      <ModalContent borderRadius="2px" p="24px" gap="36px" bg="bg">
         <ModalHeader as={Flex} align="center" direction="column" p="0">
           <Center w="56px" h="56px" borderRadius="full" bg="black.80">
             <Icon name={ICON_NAMES.logo} />
@@ -137,7 +137,7 @@ const ConnectWalletModal = ({ isOpen, onClose }: IDefaultModalProps) => {
             Connect Wallet
           </Text>
           <Text fontSize="sm" fontWeight="400">
-            To start using REBALANCE
+            To start using Invictus
           </Text>
         </ModalHeader>
 
@@ -167,7 +167,7 @@ const ConnectWalletModal = ({ isOpen, onClose }: IDefaultModalProps) => {
 
         <ModalFooter justifyContent="start">
           <Text fontSize="xs" color="black.0">
-            By connecting, I accept REBALANCE’s <Link color="greenAlpha.100">Terms of Service</Link>
+            By connecting, I accept Invictus’s <Link color="greenAlpha.100">Terms of Service</Link>
           </Text>
         </ModalFooter>
       </ModalContent>

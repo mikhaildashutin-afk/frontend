@@ -15,6 +15,7 @@ import UserProfit from "@/pagesComponents/Pools/PoolsLending/components/UserProf
 import { useAccount } from "wagmi";
 import { IAreaLineProps } from "./types";
 import { ROUTES_TYPE } from "@/consts/routes-type";
+import { tokens } from "@/themes/styles/colors";
 
 const providerColors = [
   "#38bdf8",
@@ -43,7 +44,7 @@ const providerGradients = (providers: { key: string; name: string }[]) => (
 const areaGradient = (
   <defs>
     <linearGradient id="color-lending" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="5%" stopColor={colorsArea.lending} stopOpacity={0.8} />
+      <stop offset="5%" stopColor={colorsArea.lending} stopOpacity={0.28} />
       <stop offset="95%" stopColor={colorsArea.lending} stopOpacity={0} />
     </linearGradient>
     {/* <linearGradient id="color-borrowing" x1="0" y1="0" x2="0" y2="1">
@@ -91,7 +92,7 @@ const getAreaLines = (
         name={connectedAreaLines[1].name}
         type="linear"
         dataKey="userEarning"
-        stroke="#8884d8"
+        stroke={tokens.ink3}
         fillOpacity={1}
         yAxisId={1}
         fill={`url(#color-${ROUTES_TYPE.borrowing})`}
